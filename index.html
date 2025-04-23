@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pilot Carrier Modulation Interactive PPT</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Segoe+UI:400,600&display=swap">
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            background: #f4f7fa;
+            color: #1a2330;
+        }
+        .ppt-container {
+            max-width: 900px;
+            margin: 32px auto 0 auto;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 32px rgba(26,78,138,0.10);
+            padding: 32px 40px 24px 40px;
+            min-height: 420px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .ppt-slide-title {
+            font-size: 2.1rem;
+            font-weight: 600;
+            color: #1a4e8a;
+            margin-bottom: 18px;
+        }
+        .ppt-slide-content {
+            font-size: 1.15rem;
+            flex: 1;
+        }
+        .ppt-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 32px;
+        }
+        .ppt-btn {
+            background: linear-gradient(90deg, #1a4e8a 0%, #3fa7d6 100%);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 28px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .ppt-btn:disabled {
+            background: #b0c4de;
+            cursor: not-allowed;
+        }
+        .ppt-indicator {
+            text-align: center;
+            margin-top: 18px;
+            color: #888;
+            font-size: 1rem;
+        }
+        .demo-panel {
+            max-width: 900px;
+            margin: 32px auto 0 auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+            padding: 24px 24px 32px 24px;
+            display: none;
+        }
+        .demo-panel.active {
+            display: block;
+        }
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .controls label {
+            margin-right: 10px;
+            font-size: 1rem;
+        }
+        #modulationChart {
+            height: 320px !important;
+            width: 100% !important;
+            max-width: 800px;
+            margin: 0 auto;
+            display: block;
+        }
+        @media (max-width: 700px) {
+            .ppt-container, .demo-panel { padding: 12px 2vw; min-height: unset; }
+            .ppt-slide-title { font-size: 1.2rem; }
+            .controls { flex-direction: column; gap: 8px; }
+            #modulationChart { height: 220px !important; }
+        }
+        .ppt-footer {
+            max-width: 900px;
+            margin: 32px auto 24px auto;
+            background: #eaf2fb;
+            border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(26,78,138,0.07);
+            text-align: center;
+            color: #1a4e8a;
+            font-size: 1.08rem;
+            padding: 18px 18px 12px 18px;
+        }
+        .ppt-footer .footer-section {
+            margin-bottom: 10px;
+        }
+        .ppt-footer .footer-label {
+            font-weight: 600;
+            font-size: 1.13rem;
+            margin-bottom: 2px;
+            display: block;
+        }
+        .ppt-footer .footer-value {
+            font-size: 1.08rem;
+        }
+        @media (max-width: 700px) {
+            .ppt-footer { padding: 10px 4vw; font-size: 0.98rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="ppt-container">
+        <div class="ppt-slide-title" id="pptTitle"></div>
+        <div class="ppt-slide-content" id="pptContent"></div>
+        <div class="ppt-indicator" id="pptIndicator"></div>
+        <div class="ppt-nav">
+            <button class="ppt-btn" id="pptPrev">Previous</button>
+            <button class="ppt-btn" id="pptNext">Next</button>
+        </div>
+    </div>
+    <div class="demo-panel" id="demoPanel">
+        <h2 style="color:#1a4e8a;">Interactive Pilot Carrier Modulation Demo</h2>
+        <div class="controls">
+            <label>
+                Carrier Frequency (Hz):
+                <input type="range" id="carrierFreq" min="100" max="2000" value="1000">
+                <span id="carrierFreqVal">1000</span>
+            </label>
+            <label>
+                Pilot Frequency (Hz):
+                <input type="range" id="pilotFreq" min="10" max="500" value="100">
+                <span id="pilotFreqVal">100</span>
+            </label>
+            <label>
+                Message Frequency (Hz):
+                <input type="range" id="msgFreq" min="1" max="100" value="10">
+                <span id="msgFreqVal">10</span>
+            </label>
+        </div>
+        <canvas id="modulationChart" width="800" height="320"></canvas>
+        <div style="margin-top:18px;color:#1a4e8a;font-size:1.05rem;">
+            <b>How to use:</b> Move the sliders to change the carrier, pilot, and message frequencies.<br>
+            The chart below will update in real time to show the effect on the modulated signal.
+        </div>
+        <div style="margin-top:18px;color:#1a2330;font-size:1.04rem;background:#f8fbff;padding:14px 18px;border-radius:10px;">
+            <b>What do these controls mean?</b>
+            <ul style="margin-top:8px;">
+                <li>
+                    <b>Carrier Frequency:</b> This sets the frequency of the main carrier wave. Increasing it makes the green carrier wave oscillate faster. In real systems, this is the frequency at which information is transmitted.
+                </li>
+                <li>
+                    <b>Pilot Frequency:</b> This sets the frequency of the pilot tone (orange). The pilot is a reference signal sent along with the main signal. Changing this shows how a pilot can be placed at a different frequency for synchronization or channel estimation.
+                </li>
+                <li>
+                    <b>Message Frequency:</b> This sets the frequency of the message (blue) that modulates the carrier. Increasing it makes the information content change more rapidly.
+                </li>
+            </ul>
+            <div style="margin-top:8px;">
+                <b>What do we learn?</b>
+                <ul>
+                    <li>How the <b>carrier</b> and <b>pilot</b> combine with the message to form the modulated signal (red).</li>
+                    <li>How changing each parameter affects the overall waveform and the role of the pilot in aiding demodulation and synchronization.</li>
+                    <li>How pilot carrier modulation helps in real-world communication systems for robust and reliable data transfer.</li>
+                </ul>
+            </div>
+            <div style="margin-top:12px;">
+                <b>Numerical Example:</b>
+                <div style="background:#f0f6ff;padding:10px 14px;border-radius:8px;margin-top:6px;">
+                    <b>Suppose:</b> Message frequency = 20 Hz, Carrier frequency = 1000 Hz, Pilot frequency = 100 Hz.<br>
+                    <b>Transmitted signal:</b> <br>
+                    <span style="font-family:monospace;">
+                        s(t) = sin(2π·20t)·cos(2π·1000t) + 0.2·cos(2π·100t)
+                    </span><br>
+                    <b>Interpretation:</b> The message modulates the carrier, and a small pilot tone is added at 100 Hz for reference.
+                </div>
+            </div>
+        </div>
+        <!-- Quiz Panel -->
+        <div id="quizPanel" style="margin:32px auto 0 auto;max-width:700px;background:#fffbe7;border-radius:14px;box-shadow:0 2px 12px rgba(255,200,0,0.07);padding:24px 18px 18px 18px;">
+            <div style="font-size:1.25rem;font-weight:600;color:#b8860b;margin-bottom:10px;letter-spacing:0.5px;">
+                <span style="vertical-align:middle;">📝 Quick Quiz</span>
+            </div>
+            <ol style="margin-top:8px;" id="quizQuestions">
+                <li style="margin-bottom:18px;">
+                    <b>Q1:</b> What is the main purpose of adding a pilot carrier in modulation?<br>
+                    <label class="quiz-option"><input type="radio" name="q1" value="0"> To increase bandwidth</label><br>
+                    <label class="quiz-option"><input type="radio" name="q1" value="1"> To provide a reference for coherent detection</label><br>
+                    <label class="quiz-option"><input type="radio" name="q1" value="2"> To reduce noise</label>
+                </li>
+                <li style="margin-bottom:18px;">
+                    <b>Q2:</b> If you increase the message frequency slider, what happens to the blue waveform?<br>
+                    <label class="quiz-option"><input type="radio" name="q2" value="0"> It oscillates more slowly</label><br>
+                    <label class="quiz-option"><input type="radio" name="q2" value="1"> It oscillates more rapidly</label><br>
+                    <label class="quiz-option"><input type="radio" name="q2" value="2"> It disappears</label>
+                </li>
+                <li style="margin-bottom:18px;">
+                    <b>Q3:</b> In the mathematical model, what does the pilot term help the receiver do?<br>
+                    <label class="quiz-option"><input type="radio" name="q3" value="0"> Recover the suppressed carrier</label><br>
+                    <label class="quiz-option"><input type="radio" name="q3" value="1"> Add more noise</label><br>
+                    <label class="quiz-option"><input type="radio" name="q3" value="2"> Remove the message</label>
+                </li>
+            </ol>
+            <button onclick="checkQuiz()" style="margin-top:8px;padding:8px 22px;border-radius:7px;background:#1a4e8a;color:#fff;border:none;cursor:pointer;font-size:1.08rem;">Check Answers</button>
+            <div id="quizResult" style="margin-top:16px;font-weight:600;font-size:1.08rem;"></div>
+            <div id="quizExplanation" style="margin-top:10px;font-size:1.01rem;"></div>
+        </div>
+        <script>
+        function checkQuiz() {
+            // Correct answers: q1=1, q2=1, q3=0
+            const correct = [1, 1, 0];
+            const explanations = [
+                "<b>Q1:</b> The pilot carrier provides a reference for coherent detection, allowing the receiver to recover the carrier's phase and frequency.",
+                "<b>Q2:</b> Increasing the message frequency makes the blue waveform oscillate more rapidly (higher frequency).",
+                "<b>Q3:</b> The pilot term helps the receiver recover the suppressed carrier for proper demodulation."
+            ];
+            let score = 0;
+            let userAnswers = [];
+            // Reset styles
+            document.querySelectorAll('.quiz-option').forEach(opt => {
+                opt.style.background = '';
+                opt.style.color = '';
+                opt.style.borderRadius = '';
+                opt.style.padding = '';
+            });
+            // Evaluate answers
+            for (let i = 1; i <= 3; i++) {
+                const opts = document.querySelectorAll('input[name="q'+i+'"]');
+                let answered = false;
+                opts.forEach((opt, idx) => {
+                    const label = opt.parentElement;
+                    if (opt.checked) {
+                        answered = true;
+                        userAnswers.push(idx);
+                        if (idx === correct[i-1]) {
+                            label.style.background = '#d4f7d4';
+                            label.style.color = '#176d1c';
+                        } else {
+                            label.style.background = '#ffd6d6';
+                            label.style.color = '#a80000';
+                        }
+                        label.style.borderRadius = '6px';
+                        label.style.padding = '2px 6px';
+                    }
+                    // Mark correct option green if not selected
+                    if (idx === correct[i-1]) {
+                        label.style.borderBottom = '2px solid #176d1c';
+                    }
+                });
+                if (!answered) userAnswers.push(-1);
+            }
+            // Score
+            score = userAnswers.filter((ans, i) => ans === correct[i]).length;
+            let msg = "You got " + score + " out of 3 correct.";
+            if (score === 3) msg += " Excellent!";
+            else if (score === 2) msg += " Good job!";
+            else if (score === 1) msg += " Keep learning!";
+            else msg += " Try again!";
+            document.getElementById('quizResult').innerHTML = msg;
+            // Explanations
+            let expl = "<b>Explanations:</b><ul style='margin-top:6px;'>";
+            for (let i = 0; i < 3; i++) {
+                expl += "<li>" + explanations[i] + "</li>";
+            }
+            expl += "</ul>";
+            document.getElementById('quizExplanation').innerHTML = expl;
+        }
+        </script>
+    </div>
+    <div class="ppt-footer">
+        <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:32px;">
+            <div style="background:#f8fbff;border-radius:12px;padding:16px 24px 12px 24px;min-width:220px;box-shadow:0 2px 8px rgba(26,78,138,0.07);margin-bottom:10px;">
+                <div style="font-size:1.15rem;font-weight:700;color:#1a4e8a;margin-bottom:4px;letter-spacing:0.5px;">
+                    👨‍🎓 <span style="vertical-align:middle;">Created By</span>
+                </div>
+                <div style="font-size:1.08rem;"><b>Sudeep Kumar Singh</b></div>
+                <div style="margin:2px 0 2px 0;">Roll No: <b>28021</b></div>
+                <div style="font-size:1.01rem;">B.Sc. Computer Science (Hons)</div>
+                <div style="font-size:1.01rem;">Atma Ram Sanatan Dharma College</div>
+            </div>
+            <div style="background:#f8fbff;border-radius:12px;padding:16px 24px 12px 24px;min-width:220px;box-shadow:0 2px 8px rgba(26,78,138,0.07);margin-bottom:10px;">
+                <div style="font-size:1.15rem;font-weight:700;color:#1a4e8a;margin-bottom:4px;letter-spacing:0.5px;">
+                    👩‍🏫 <span style="vertical-align:middle;">Submitted To</span>
+                </div>
+                <div style="font-size:1.08rem;"><b>Dr. Nisha Jha</b> <span style="font-weight:400;">(Faculty Mentor)</span></div>
+                <div style="margin:2px 0 2px 0;">Paper: <b>Communication System</b></div>
+                <div style="font-size:1.01rem;">Department of Electronics</div>
+            </div>
+        </div>
+        <div style="font-size:1.04rem;color:#3fa7d6;margin-top:10px;">
+            <i>Thank you for reviewing this interactive pilot carrier modulation project!</i>
+        </div>
+    </div>
+    <script>
+    // Slides content
+    const slides = [
+        {
+            title: "Pilot‐Carrier Modulation: Overview",
+            content: `
+                <ul>
+                    <li><b>Pilot‐carrier modulation</b> transmits a small, unmodulated (or lightly modulated) reference “pilot” tone or carrier alongside the main information‐bearing signal.</li>
+                    <li>This aids the receiver in <b>coherent detection</b>, <b>frequency/phase recovery</b>, and <b>channel estimation</b>.</li>
+                </ul>
+            `
+        },
+        {
+            title: "Why Use a Pilot Carrier?",
+            content: `
+                <ul>
+                    <li><b>Carrier Recovery:</b> In suppressed‐carrier schemes (e.g. DSB-SC AM, QAM) the original carrier is not sent (to save power/bandwidth), so the receiver has no built-in reference for demodulating the signal. A low-level pilot carrier restores that reference.</li>
+                    <li><b>Frequency/Phase Reference:</b> A continuous pilot tone lets the receiver lock a local oscillator (via a PLL) to the correct frequency and phase, enabling accurate coherent detection.</li>
+                    <li><b>Channel Estimation:</b> In multi-carrier systems (e.g. OFDM), pilot subcarriers scattered among data subcarriers allow estimation of the channel’s amplitude/phase response (for equalization).</li>
+                </ul>
+            `
+        },
+        {
+            title: "Basic Principle",
+            content: `
+                <ol>
+                    <li><b>Transmitter:</b> Generates the suppressed‐carrier (or multi‐carrier) modulated signal and adds a <b>pilot tone</b> at a known frequency (and known amplitude) within the channel.</li>
+                    <li><b>Received Composite Signal:</b> Contains both the information-modulated spectrum and the pilot tone.</li>
+                    <li><b>Receiver:</b> Uses a <b>Phase-Locked Loop (PLL)</b> or digital carrier‐recovery algorithm locked to the pilot. Reconstructs the suppressed carrier (or pilots for each subcarrier in OFDM) to demodulate the data.</li>
+                </ol>
+            `
+        },
+        {
+            title: "Mathematical Model (DSB-SC with Pilot)",
+            content: `
+                <div>
+                    <p>Let <i>m(t)</i> be the baseband message, <i>ω<sub>c</sub></i> the intended carrier frequency, <i>A<sub>p</sub></i> the pilot amplitude (much smaller than the unmodulated carrier amplitude <i>A</i> would have been).</p>
+                    <div style="background:#f0f6ff;padding:10px;border-radius:8px;">
+                        <span style="font-size:1.1em;">
+                            s(t) = m(t)cos(ω<sub>c</sub>t) + A<sub>p</sub>cos(ω<sub>c</sub>t)
+                        </span>
+                    </div>
+                    <ul>
+                        <li>First term: DSB-SC modulated message.</li>
+                        <li>Second term: small unmodulated pilot at the same carrier frequency.</li>
+                    </ul>
+                </div>
+            `
+        },
+        {
+            title: "Coherent Demodulation with Pilot",
+            content: `
+                <div>
+                    <p><b>Receiver PLL</b> locks onto the pilot to regenerate the carrier for demodulation:</p>
+                    <div style="background:#f0f6ff;padding:10px;border-radius:8px;">
+                        <span style="font-size:1.1em;">
+                            <span style="white-space:nowrap;">&#770;m(t) = 2s(t)cos(ω<sub>c</sub>t) → m(t) + 2A<sub>p</sub>cos²(ω<sub>c</sub>t)</span>
+                        </span>
+                    </div>
+                    <ul>
+                        <li>The known pilot term can be filtered out after demodulation.</li>
+                    </ul>
+                </div>
+            `
+        },
+        {
+            title: "Key Applications",
+            content: `
+                <table style="width:100%;border-collapse:collapse;">
+                    <tr style="background:#eaf2fb;">
+                        <th style="padding:6px;border:1px solid #bcd;">Application</th>
+                        <th style="padding:6px;border:1px solid #bcd;">Pilot Role</th>
+                        <th style="padding:6px;border:1px solid #bcd;">Comments</th>
+                    </tr>
+                    <tr>
+                        <td style="padding:6px;border:1px solid #bcd;">AM Stereo Broadcasting</td>
+                        <td style="padding:6px;border:1px solid #bcd;">19 kHz pilot tone (9% level) for stereo decoder</td>
+                        <td style="padding:6px;border:1px solid #bcd;">38 kHz subcarrier regenerated via pilot doubling</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:6px;border:1px solid #bcd;">DSB-SC & QAM</td>
+                        <td style="padding:6px;border:1px solid #bcd;">Small carrier insertion for coherent demodulation</td>
+                        <td style="padding:6px;border:1px solid #bcd;">Carrier suppressed to save power, pilot restores it</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:6px;border:1px solid #bcd;">OFDM (Wi-Fi, LTE)</td>
+                        <td style="padding:6px;border:1px solid #bcd;">Pilot subcarriers (scattered/comb)</td>
+                        <td style="padding:6px;border:1px solid #bcd;">Channel estimation & equalization</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:6px;border:1px solid #bcd;">Cable TV (QAM)</td>
+                        <td style="padding:6px;border:1px solid #bcd;">Pilot for symbol timing & equalizer training</td>
+                        <td style="padding:6px;border:1px solid #bcd;">Improves performance over frequency‐selective channels</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:6px;border:1px solid #bcd;">Digital Radio (DAB)</td>
+                        <td style="padding:6px;border:1px solid #bcd;">Pilot tones for subband synchronization</td>
+                        <td style="padding:6px;border:1px solid #bcd;">Ensures correct multiplex alignment</td>
+                    </tr>
+                </table>
+            `
+        },
+        {
+            title: "Design Considerations",
+            content: `
+                <ul>
+                    <li><b>Pilot Power Level:</b> Must be high enough for reliable detection in noise, but low enough not to unduly reduce power/data capacity.</li>
+                    <li><b>Placement in Spectrum:</b> Co-located with carrier (for SC) or scattered among data subcarriers (for OFDM) depending on purpose.</li>
+                    <li><b>Receiver Complexity:</b> PLL or digital algorithms add complexity and lock‐time considerations.</li>
+                    <li><b>Spectral Efficiency:</b> Pilots consume a small fraction of bandwidth/power; design balances overhead vs. demodulation robustness.</li>
+                </ul>
+            `
+        },
+        {
+            title: "Summary",
+            content: `
+                <ul>
+                    <li>Pilot‐carrier modulation is a simple yet powerful tool to:</li>
+                    <li>Recover suppressed carriers in AM/QAM.</li>
+                    <li>Synchronize and equalize multicarrier systems.</li>
+                    <li>Ensure robust coherent detection under real‐world channel impairments.</li>
+                    <li>Embedding a known reference signal into the transmitted spectrum enables precise demodulation, lower bit-error rates, and better audio/video quality in broadcasting and data communications.</li>
+                </ul>
+            `
+        },
+        {
+            title: "Interactive Demo",
+            content: `
+                <p>Experiment with pilot carrier modulation using the interactive demo below.</p>
+                <ul style="margin-top:18px;">
+                    <li>Adjust the carrier, pilot, and message frequencies.</li>
+                    <li>Observe how the modulated signal changes in real time.</li>
+                </ul>
+            `
+        }
+    ];
+
+    let currentSlide = 0;
+    function renderSlide() {
+        document.getElementById('pptTitle').innerHTML = slides[currentSlide].title;
+        document.getElementById('pptContent').innerHTML = slides[currentSlide].content;
+        document.getElementById('pptIndicator').textContent = `Slide ${currentSlide + 1} of ${slides.length}`;
+        document.getElementById('pptPrev').disabled = currentSlide === 0;
+        document.getElementById('pptNext').disabled = currentSlide === slides.length - 1;
+        // Show demo panel only on last slide
+        document.getElementById('demoPanel').classList.toggle('active', slides[currentSlide].title === "Interactive Demo");
+    }
+    document.getElementById('pptPrev').onclick = function() {
+        if (currentSlide > 0) { currentSlide--; renderSlide(); }
+    };
+    document.getElementById('pptNext').onclick = function() {
+        if (currentSlide < slides.length - 1) { currentSlide++; renderSlide(); }
+    };
+    renderSlide();
+    </script>
+    <script src="main.js"></script>
+</body>
+</html>
