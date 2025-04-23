@@ -191,97 +191,121 @@
                 </div>
             </div>
         </div>
-        <!-- Quiz Panel -->
-        <div id="quizPanel" style="margin:32px auto 0 auto;max-width:700px;background:#fffbe7;border-radius:14px;box-shadow:0 2px 12px rgba(255,200,0,0.07);padding:24px 18px 18px 18px;">
-            <div style="font-size:1.25rem;font-weight:600;color:#b8860b;margin-bottom:10px;letter-spacing:0.5px;">
-                <span style="vertical-align:middle;">📝 Quick Quiz</span>
-            </div>
-            <ol style="margin-top:8px;" id="quizQuestions">
-                <li style="margin-bottom:18px;">
-                    <b>Q1:</b> What is the main purpose of adding a pilot carrier in modulation?<br>
-                    <label class="quiz-option"><input type="radio" name="q1" value="0"> To increase bandwidth</label><br>
-                    <label class="quiz-option"><input type="radio" name="q1" value="1"> To provide a reference for coherent detection</label><br>
-                    <label class="quiz-option"><input type="radio" name="q1" value="2"> To reduce noise</label>
-                </li>
-                <li style="margin-bottom:18px;">
-                    <b>Q2:</b> If you increase the message frequency slider, what happens to the blue waveform?<br>
-                    <label class="quiz-option"><input type="radio" name="q2" value="0"> It oscillates more slowly</label><br>
-                    <label class="quiz-option"><input type="radio" name="q2" value="1"> It oscillates more rapidly</label><br>
-                    <label class="quiz-option"><input type="radio" name="q2" value="2"> It disappears</label>
-                </li>
-                <li style="margin-bottom:18px;">
-                    <b>Q3:</b> In the mathematical model, what does the pilot term help the receiver do?<br>
-                    <label class="quiz-option"><input type="radio" name="q3" value="0"> Recover the suppressed carrier</label><br>
-                    <label class="quiz-option"><input type="radio" name="q3" value="1"> Add more noise</label><br>
-                    <label class="quiz-option"><input type="radio" name="q3" value="2"> Remove the message</label>
-                </li>
-            </ol>
-            <button onclick="checkQuiz()" style="margin-top:8px;padding:8px 22px;border-radius:7px;background:#1a4e8a;color:#fff;border:none;cursor:pointer;font-size:1.08rem;">Check Answers</button>
-            <div id="quizResult" style="margin-top:16px;font-weight:600;font-size:1.08rem;"></div>
-            <div id="quizExplanation" style="margin-top:10px;font-size:1.01rem;"></div>
+    </div> <!-- end of .demo-panel -->
+    <!-- Quiz Panel moved fully outside demo-panel and improved responsiveness -->
+    <div id="quizPanel" style="
+        margin:36px auto 0 auto;
+        max-width:700px;
+        background:#fffbe7;
+        border-radius:14px;
+        box-shadow:0 2px 12px rgba(255,200,0,0.07);
+        padding:28px 18px 22px 18px;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        width:90vw;
+        min-width:0;
+    ">
+        <div style="font-size:1.25rem;font-weight:600;color:#b8860b;margin-bottom:18px;letter-spacing:0.5px;">
+            <span style="vertical-align:middle;">📝 Quick Quiz</span>
         </div>
-        <script>
-        function checkQuiz() {
-            // Correct answers: q1=1, q2=1, q3=0
-            const correct = [1, 1, 0];
-            const explanations = [
-                "<b>Q1:</b> The pilot carrier provides a reference for coherent detection, allowing the receiver to recover the carrier's phase and frequency.",
-                "<b>Q2:</b> Increasing the message frequency makes the blue waveform oscillate more rapidly (higher frequency).",
-                "<b>Q3:</b> The pilot term helps the receiver recover the suppressed carrier for proper demodulation."
-            ];
-            let score = 0;
-            let userAnswers = [];
-            // Reset styles
-            document.querySelectorAll('.quiz-option').forEach(opt => {
-                opt.style.background = '';
-                opt.style.color = '';
-                opt.style.borderRadius = '';
-                opt.style.padding = '';
-            });
-            // Evaluate answers
-            for (let i = 1; i <= 3; i++) {
-                const opts = document.querySelectorAll('input[name="q'+i+'"]');
-                let answered = false;
-                opts.forEach((opt, idx) => {
-                    const label = opt.parentElement;
-                    if (opt.checked) {
-                        answered = true;
-                        userAnswers.push(idx);
-                        if (idx === correct[i-1]) {
-                            label.style.background = '#d4f7d4';
-                            label.style.color = '#176d1c';
-                        } else {
-                            label.style.background = '#ffd6d6';
-                            label.style.color = '#a80000';
-                        }
-                        label.style.borderRadius = '6px';
-                        label.style.padding = '2px 6px';
-                    }
-                    // Mark correct option green if not selected
-                    if (idx === correct[i-1]) {
-                        label.style.borderBottom = '2px solid #176d1c';
-                    }
-                });
-                if (!answered) userAnswers.push(-1);
-            }
-            // Score
-            score = userAnswers.filter((ans, i) => ans === correct[i]).length;
-            let msg = "You got " + score + " out of 3 correct.";
-            if (score === 3) msg += " Excellent!";
-            else if (score === 2) msg += " Good job!";
-            else if (score === 1) msg += " Keep learning!";
-            else msg += " Try again!";
-            document.getElementById('quizResult').innerHTML = msg;
-            // Explanations
-            let expl = "<b>Explanations:</b><ul style='margin-top:6px;'>";
-            for (let i = 0; i < 3; i++) {
-                expl += "<li>" + explanations[i] + "</li>";
-            }
-            expl += "</ul>";
-            document.getElementById('quizExplanation').innerHTML = expl;
-        }
-        </script>
+        <ol style="margin-top:0;margin-bottom:0;width:100%;" id="quizQuestions">
+            <li style="margin-bottom:24px;">
+                <b>Q1:</b> What is the main purpose of adding a pilot carrier in modulation?<br>
+                <label class="quiz-option" style="display:block;margin:7px 0;"><input type="radio" name="q1" value="0"> To increase bandwidth</label>
+                <label class="quiz-option" style="display:block;margin:7px 0;"><input type="radio" name="q1" value="1"> To provide a reference for coherent detection</label>
+                <label class="quiz-option" style="display:block;margin:7px 0;"><input type="radio" name="q1" value="2"> To reduce noise</label>
+            </li>
+            <li style="margin-bottom:24px;">
+                <b>Q2:</b> If you increase the message frequency slider, what happens to the blue waveform?<br>
+                <label class="quiz-option" style="display:block;margin:7px 0;"><input type="radio" name="q2" value="0"> It oscillates more slowly</label>
+                <label class="quiz-option" style="display:block;margin:7px 0;"><input type="radio" name="q2" value="1"> It oscillates more rapidly</label>
+                <label class="quiz-option" style="display:block;margin:7px 0;"><input type="radio" name="q2" value="2"> It disappears</label>
+            </li>
+            <li style="margin-bottom:24px;">
+                <b>Q3:</b> In the mathematical model, what does the pilot term help the receiver do?<br>
+                <label class="quiz-option" style="display:block;margin:7px 0;"><input type="radio" name="q3" value="0"> Recover the suppressed carrier</label>
+                <label class="quiz-option" style="display:block;margin:7px 0;"><input type="radio" name="q3" value="1"> Add more noise</label>
+                <label class="quiz-option" style="display:block;margin:7px 0;"><input type="radio" name="q3" value="2"> Remove the message</label>
+            </li>
+        </ol>
+        <button onclick="checkQuiz()" style="margin-top:8px;padding:8px 22px;border-radius:7px;background:#1a4e8a;color:#fff;border:none;cursor:pointer;font-size:1.08rem;">Check Answers</button>
+        <div id="quizResult" style="margin-top:16px;font-weight:600;font-size:1.08rem;"></div>
+        <div id="quizExplanation" style="margin-top:10px;font-size:1.01rem;"></div>
     </div>
+    <style>
+        @media (max-width: 700px) {
+            #quizPanel {
+                padding: 12px 2vw 16px 2vw !important;
+                font-size: 0.98rem;
+                width: 98vw !important;
+                min-width: 0 !important;
+            }
+            #quizPanel ol { padding-left: 18px !important; }
+            #quizPanel .quiz-option { font-size: 0.98rem !important; }
+        }
+    </style>
+    <script>
+    function checkQuiz() {
+        // Correct answers: q1=1, q2=1, q3=0
+        const correct = [1, 1, 0];
+        const explanations = [
+            "<b>Q1:</b> The pilot carrier provides a reference for coherent detection, allowing the receiver to recover the carrier's phase and frequency.",
+            "<b>Q2:</b> Increasing the message frequency makes the blue waveform oscillate more rapidly (higher frequency).",
+            "<b>Q3:</b> The pilot term helps the receiver recover the suppressed carrier for proper demodulation."
+        ];
+        let score = 0;
+        let userAnswers = [];
+        // Reset styles
+        document.querySelectorAll('.quiz-option').forEach(opt => {
+            opt.style.background = '';
+            opt.style.color = '';
+            opt.style.borderRadius = '';
+            opt.style.padding = '';
+        });
+        // Evaluate answers
+        for (let i = 1; i <= 3; i++) {
+            const opts = document.querySelectorAll('input[name="q'+i+'"]');
+            let answered = false;
+            opts.forEach((opt, idx) => {
+                const label = opt.parentElement;
+                if (opt.checked) {
+                    answered = true;
+                    userAnswers.push(idx);
+                    if (idx === correct[i-1]) {
+                        label.style.background = '#d4f7d4';
+                        label.style.color = '#176d1c';
+                    } else {
+                        label.style.background = '#ffd6d6';
+                        label.style.color = '#a80000';
+                    }
+                    label.style.borderRadius = '6px';
+                    label.style.padding = '2px 6px';
+                }
+                // Mark correct option green if not selected
+                if (idx === correct[i-1]) {
+                    label.style.borderBottom = '2px solid #176d1c';
+                }
+            });
+            if (!answered) userAnswers.push(-1);
+        }
+        // Score
+        score = userAnswers.filter((ans, i) => ans === correct[i]).length;
+        let msg = "You got " + score + " out of 3 correct.";
+        if (score === 3) msg += " Excellent!";
+        else if (score === 2) msg += " Good job!";
+        else if (score === 1) msg += " Keep learning!";
+        else msg += " Try again!";
+        document.getElementById('quizResult').innerHTML = msg;
+        // Explanations
+        let expl = "<b>Explanations:</b><ul style='margin-top:6px;'>";
+        for (let i = 0; i < 3; i++) {
+            expl += "<li>" + explanations[i] + "</li>";
+        }
+        expl += "</ul>";
+        document.getElementById('quizExplanation').innerHTML = expl;
+    }
+    </script>
     <div class="ppt-footer">
         <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:32px;">
             <div style="background:#f8fbff;border-radius:12px;padding:16px 24px 12px 24px;min-width:220px;box-shadow:0 2px 8px rgba(26,78,138,0.07);margin-bottom:10px;">
