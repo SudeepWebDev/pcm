@@ -93,9 +93,155 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 12px rgba(0,0,0,0.15);
         }
+        
+        /* Hamburger Menu Styles */
+        .nav-toggle {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 1000;
+            padding: 10px;
+            background: rgba(0, 64, 128, 0.8);
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 24px;
+            width: 30px;
+        }
+        
+        .nav-toggle span {
+            display: block;
+            width: 100%;
+            height: 3px;
+            background: white;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-toggle.active span:nth-child(1) {
+            transform: translateY(10px) rotate(45deg);
+        }
+        
+        .nav-toggle.active span:nth-child(2) {
+            opacity: 0;
+        }
+        
+        .nav-toggle.active span:nth-child(3) {
+            transform: translateY(-10px) rotate(-45deg);
+        }
+        
+        .side-nav {
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 280px;
+            height: 100%;
+            background: #004080;
+            z-index: 999;
+            box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
+            transition: right 0.3s ease;
+            padding-top: 70px;
+        }
+        
+        .side-nav.active {
+            right: 0;
+        }
+        
+        .side-nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .side-nav ul li {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .side-nav ul li a {
+            display: block;
+            padding: 15px 20px;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        
+        .side-nav ul li a:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+        }
+        
+        @media (min-width: 992px) {
+            .nav-toggle {
+                display: none;
+            }
+        }
+        .real-time-calcs {
+            margin-top: 30px;
+            border-top: 1px dashed #aaa;
+            padding-top: 20px;
+        }
+        .calculation-box {
+            background-color: #f0f8ff;
+            padding: 15px 20px;
+            border-radius: 8px;
+            border-left: 4px solid #004080;
+        }
+        .calculation-box strong {
+            color: #004080;
+        }
+        .calculation-box .math-formula {
+            background-color: #fff;
+        }
+        #calcCarrierFreq, #calcPilotFreq, #calcMsgFreq,
+        #eqMsgFreq, #eqMsgFreq2, #eqMsgFreq3, 
+        #eqCarrierFreq, #eqCarrierFreq2, #eqPilotFreq,
+        #powerEfficiency, #powerRatio, #msgBandwidth,
+        #pilotComponents, #noPilotComponents {
+            font-weight: bold;
+            color: #d04000;
+            transition: background-color 0.3s;
+            padding: 2px 4px;
+        }
+        .highlight {
+            background-color: #fffacd;
+        }
     </style>
 </head>
 <body>
+
+<!-- Hamburger menu toggle button -->
+<div class="nav-toggle" id="navToggle">
+    <span></span>
+    <span></span>
+    <span></span>
+</div>
+
+<!-- Overlay for when menu is open -->
+<div class="overlay" id="overlay"></div>
+
+<!-- Side navigation menu -->
+<nav class="side-nav" id="sideNav">
+    <ul>
+        <li><a href="#presentationSection">Presentation</a></li>
+        <li><a href="#demoPanel">Interactive Demo</a></li>
+        <li><a href="#exampleSection">FM Radio Example</a></li>
+        <li><a href="#mathSection">Mathematical Model</a></li>
+        <li><a href="#quizSection">Knowledge Quiz</a></li>
+        <li><a href="#referencesSection">References</a></li>
+    </ul>
+</nav>
 
 <header>
     <h1>Pilot Carrier Modulation</h1>
@@ -155,7 +301,7 @@
         </div>
     </section>
 
-    <section class="example-section">
+    <section class="example-section" id="exampleSection">
         <h2>Real Example: FM Radio Transmission</h2>
         <p>In FM radio broadcasting, a pilot tone at 19 kHz is transmitted alongside the main stereo signal to help receivers decode the left and right audio channels. The carrier frequency might be around 100 MHz for FM radio, while message signals (audio) range from 20 Hz to 15 kHz.</p>
         <p><b>Example Parameters:</b>
@@ -168,7 +314,7 @@
         <p>This example shows how a pilot signal is essential for synchronization and signal demodulation in real-world applications like FM broadcasting.</p>
     </section>
 
-    <section class="math-section">
+    <section class="math-section" id="mathSection">
         <h2>Mathematical Model Verification</h2>
         <p>The modulated signal <b>with pilot</b> is given by:</p>
         <p style="font-family:monospace;">s(t) = (1 + m(t)) × cos(2πf<sub>c</sub>t) + 0.2 × cos(2πf<sub>p</sub>t)</p>
@@ -182,165 +328,44 @@
             <li>"With Pilot" includes an extra sinusoidal component at pilot frequency.</li>
             <li>"Without Pilot" shows only the message-modulated carrier.</li>
         </ul>
-    </section>
 
-    <!-- Technical Details Section -->
-    <section class="technical-section">
-        <h2>Technical Details: Pilot-Carrier Modulation</h2>
-        
-        <div class="content-block">
-            <h3>What Is Pilot-Carrier Modulation?</h3>
-            <ul>
-                <li>A small, attenuated carrier (the "pilot") is reinserted into an SSB-suppressed signal after filtering.</li>
-                <li>Pilot level typically <strong>16–26 dB below</strong> the full carrier amplitude.</li>
-                <li>Provides a frequency reference for the receiver's coherent demodulator/AFC.</li>
-            </ul>
-        </div>
-
-        <div class="content-block">
-            <h3>Why It's Needed</h3>
-            <ul>
-                <li><strong>Frequency Stability:</strong> Pure SSB (J3E) suppresses the carrier entirely → receiver has no reference → any local‐oscillator drift (even a few Hz) causes distortion.</li>
-                <li><strong>Automatic Frequency Control (AFC):</strong> Pilot allows the receiver to lock its local oscillator, maintaining Δf≈0 over long periods.</li>
-                <li><strong>Demodulation Simplicity:</strong> Enables a straightforward coherent detector rather than complex VFO stabilization in the receiver.</li>
-            </ul>
-        </div>
-
-        <div class="content-block">
-            <h3>Mathematical/Power-Efficiency Analysis</h3>
-            
-            <h4>1. Pure SSB-SC (J3E) without pilot</h4>
-            <p>All transmitted power (P<sub>t</sub>) is in the one sideband:</p>
-            <div class="math-formula">
-                P<sub>s</sub> = P<sub>t</sub>, P<sub>c</sub>=0, η<sub>SSB</sub> = P<sub>s</sub>/P<sub>t</sub> = 100%.
+        <!-- Real-time calculations section -->
+        <div id="realTimeCalcs" class="real-time-calcs">
+            <h3>Real-time Calculations Based on Current Parameters</h3>
+            <div class="calculation-box">
+                <p><strong>Current Parameters:</strong></p>
+                <ul>
+                    <li>Carrier Frequency (f<sub>c</sub>): <span id="calcCarrierFreq">1000</span> Hz</li>
+                    <li>Pilot Frequency (f<sub>p</sub>): <span id="calcPilotFreq">100</span> Hz</li>
+                    <li>Message Frequency (f<sub>m</sub>): <span id="calcMsgFreq">10</span> Hz</li>
+                </ul>
+                
+                <p><strong>Signal Equations with Current Values:</strong></p>
+                <div class="math-formula">
+                    <p>m(t) = sin(2π × <span id="eqMsgFreq">10</span> × t)</p>
+                    <p>s<sub>with-pilot</sub>(t) = (1 + sin(2π × <span id="eqMsgFreq2">10</span> × t)) × cos(2π × <span id="eqCarrierFreq">1000</span> × t) + 0.2 × cos(2π × <span id="eqPilotFreq">100</span> × t)</p>
+                    <p>s<sub>without-pilot</sub>(t) = (1 + sin(2π × <span id="eqMsgFreq3">10</span> × t)) × cos(2π × <span id="eqCarrierFreq2">1000</span> × t)</p>
+                </div>
+                
+                <p><strong>Power Calculations:</strong></p>
+                <div class="math-formula">
+                    <p>For Pilot-Carrier SSB, with pilot attenuated by 16 dB:</p>
+                    <p>Power efficiency = <span id="powerEfficiency">97.6</span>%</p>
+                    <p>Ratio of pilot power to sideband power: 1:<span id="powerRatio">40</span></p>
+                </div>
+                
+                <p><strong>Frequency Domain Analysis:</strong></p>
+                <div class="math-formula">
+                    <p>Message bandwidth = <span id="msgBandwidth">10</span> Hz</p>
+                    <p>With Pilot: Components at f<sub>c</sub> ± f<sub>m</sub> and f<sub>p</sub> = <span id="pilotComponents">1000 ± 10 Hz, 100 Hz</span></p>
+                    <p>Without Pilot: Components only at f<sub>c</sub> ± f<sub>m</sub> = <span id="noPilotComponents">1000 ± 10 Hz</span></p>
+                </div>
             </div>
-            <p><strong>Challenge:</strong> P<sub>c</sub>=0 → no reference for demodulation.</p>
-            
-            <h4>2. Pilot-Carrier SSB</h4>
-            <p>Let P<sub>s</sub> = sideband power, pilot-carrier power P<sub>c</sub> is set to P<sub>s</sub>·10<sup>-L/10</sup>, where L is the attenuation in dB (e.g. 20 dB ⇒ 10<sup>-2</sup>).</p>
-            <p>Total power:</p>
-            <div class="math-formula">
-                P<sub>t</sub> = P<sub>s</sub> + P<sub>c</sub> = P<sub>s</sub>(1 + 10<sup>-L/10</sup>)
-            </div>
-            <p><strong>Efficiency:</strong></p>
-            <div class="math-formula">
-                η<sub>pilot</sub> = P<sub>s</sub>/P<sub>t</sub> = 1/(1 + 10<sup>-L/10</sup>)×100%
-            </div>
-            <p><strong>Examples:</strong></p>
-            <ul>
-                <li>L=16 dB ⇒ P<sub>c</sub>/P<sub>s</sub>≈0.025 ⇒ η≈97.6%</li>
-                <li>L=26 dB ⇒ P<sub>c</sub>/P<sub>s</sub>≈0.0025 ⇒ η≈99.75%</li>
-            </ul>
-            
-            <h4>3. Conventional AM (DSB with full carrier)</h4>
-            <p>For 100% modulation index m=1:</p>
-            <ul>
-                <li>Sideband power =P<sub>c</sub>/2 (each sideband share), total sideband =P<sub>c</sub>/2.</li>
-                <li>Carrier power =P<sub>c</sub></li>
-                <li>Efficiency:</li>
-            </ul>
-            <div class="math-formula">
-                η<sub>AM</sub> = sidebands/(P<sub>c</sub> + sidebands) = (P<sub>c</sub>/2)/(1.5·P<sub>c</sub>)≈33%
-            </div>
-        </div>
-
-        <div class="content-block">
-            <h3>Bandwidth Comparison</h3>
-            <table class="comparison-table">
-                <thead>
-                    <tr>
-                        <th>Scheme</th>
-                        <th>Bandwidth</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Conventional AM</td>
-                        <td>2B (two sidebands)</td>
-                    </tr>
-                    <tr>
-                        <td>Pure SSB (J3E)</td>
-                        <td>B</td>
-                    </tr>
-                    <tr>
-                        <td>Pilot-Carrier SSB</td>
-                        <td>B (plus negligible pilot)</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="content-block">
-            <h3>Advantages of Pilot-Carrier SSB vs. Alternatives</h3>
-            
-            <h4>1. Vs. Pure SSB-SC</h4>
-            <ul>
-                <li>+ Enables coherent demod/AFC → robust to drift.</li>
-                <li>– Very small power penalty (1–3%).</li>
-            </ul>
-            
-            <h4>2. Vs. Conventional AM</h4>
-            <ul>
-                <li>+ Dramatic power efficiency (≈99% vs. ≈33%).</li>
-                <li>+ Half the bandwidth (B vs. 2B).</li>
-                <li>+ Better range & SNR for the same transmitter power.</li>
-            </ul>
-            
-            <h4>3. Practical Receiver Simplification</h4>
-            <ul>
-                <li>No need for bulky, ultra-stable VFOs or expensive synthesizers.</li>
-                <li>Pilot supports low-cost, tunable receivers with reliable long-term stability.</li>
-            </ul>
-        </div>
-
-        <div class="content-block">
-            <h3>Summary of Trade-Offs</h3>
-            <table class="comparison-table">
-                <thead>
-                    <tr>
-                        <th>Feature</th>
-                        <th>AM (100% m)</th>
-                        <th>SSB-SC (pure)</th>
-                        <th>SSB + Pilot</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Power Efficiency</td>
-                        <td>33%</td>
-                        <td>100%</td>
-                        <td>97.6–99.75% (depending on L)</td>
-                    </tr>
-                    <tr>
-                        <td>Bandwidth</td>
-                        <td>2B</td>
-                        <td>B</td>
-                        <td>B</td>
-                    </tr>
-                    <tr>
-                        <td>Carrier Reference</td>
-                        <td>✓</td>
-                        <td>✗</td>
-                        <td>✓ (weak)</td>
-                    </tr>
-                    <tr>
-                        <td>Receiver Complexity</td>
-                        <td>Low</td>
-                        <td>High (drift)</td>
-                        <td>Low (AFC-enabled)</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="content-block">
-            <h3>Key Takeaway</h3>
-            <p>Pilot-carrier modulation in SSB systems delivers almost all the power- and bandwidth-efficiency benefits of pure SSB while reintroducing just enough carrier (1–3% extra power) to allow simple, stable, coherent demodulation and automatic frequency control—ideal for maritime and long-haul mobile communications.</p>
         </div>
     </section>
 
-    <!-- Quiz Section -->
-    <section class="quiz-section">
+   <!-- Quiz Section -->
+    <section class="quiz-section" id="quizSection">
         <h2>Test Your Knowledge</h2>
         <div class="quiz-container">
             <div class="quiz-item">
@@ -390,7 +415,7 @@
     </section>
 
     <!-- References Section -->
-    <section class="references-section">
+    <section class="references-section" id="referencesSection">
         <h2>References</h2>
         <div class="content-block">
             <ol class="reference-list">
@@ -550,10 +575,104 @@
         border-top: 1px solid #eee;
         padding-top: 15px;
     }
+    
+    /* Footer Styles */
+    .attribution-footer {
+        background-color: #004080;
+        color: white;
+        padding: 2rem;
+        margin-top: 3rem;
+    }
+    
+    .attribution-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-around;
+        flex-wrap: wrap;
+    }
+    
+    .attribution-section {
+        padding: 1rem;
+        min-width: 250px;
+    }
+    
+    .attribution-section h3 {
+        margin-top: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        padding-bottom: 10px;
+    }
+    
+    .attribution-section p {
+        margin: 5px 0;
+    }
+    
+    @media (max-width: 600px) {
+        .attribution-container {
+            flex-direction: column;
+        }
+        
+        .attribution-section {
+            text-align: center;
+        }
+    }
 </style>
+
+<!-- Footer with attribution -->
+<footer class="attribution-footer">
+    <div class="attribution-container">
+        <div class="attribution-section">
+            <h3>Created By</h3>
+            <p>Sudeep Kumar Singh</p>
+            <p>22/28021</p>
+            <p>Paper: Communication System</p>
+            <p>Bsc Computer Science Hons</p>
+            <p>Atma Ram Santan Dharma College, DU</p>
+        </div>
+        <div class="attribution-section">
+            <h3>Submitted to</h3>
+            <p>Dr. Nisha Jha</p>
+            <p>Department of Electronics</p>
+            <p>Atma Ram Santan Dharma College</p>
+            <p>University of Delhi</p>
+        </div>
+    </div>
+</footer>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Hamburger menu functionality
+        const navToggle = document.getElementById('navToggle');
+        const sideNav = document.getElementById('sideNav');
+        const overlay = document.getElementById('overlay');
+        
+        navToggle.addEventListener('click', toggleNav);
+        overlay.addEventListener('click', closeNav);
+        
+        // Close menu when clicking a nav link (for better mobile UX)
+        document.querySelectorAll('.side-nav a').forEach(link => {
+            link.addEventListener('click', closeNav);
+        });
+        
+        function toggleNav() {
+            navToggle.classList.toggle('active');
+            sideNav.classList.toggle('active');
+            
+            if (sideNav.classList.contains('active')) {
+                document.body.style.overflow = 'hidden'; // Prevent scrolling while menu is open
+                overlay.style.display = 'block';
+            } else {
+                closeNav();
+            }
+        }
+        
+        function closeNav() {
+            navToggle.classList.remove('active');
+            sideNav.classList.remove('active');
+            document.body.style.overflow = '';
+            overlay.style.display = 'none';
+        }
+        
         // Check if Canva iframe loads properly
         const canvaFrame = document.getElementById('canvaFrame');
         const canvaFallback = document.getElementById('canvaFallback');
@@ -588,11 +707,67 @@
         const carrierFreqVal = document.getElementById('carrierFreqVal');
         const pilotFreqVal = document.getElementById('pilotFreqVal');
         const msgFreqVal = document.getElementById('msgFreqVal');
+// GE/:532  Uncaught ReferenceError: calcElements is not defined
+// at updateMathCalculations (GE/:532:33)
+//     at updateLabels (GE/:526:13)
+//     at HTMLDocument.<anonymous> (GE/:636:13)
+// 50GE/:532  Uncaught ReferenceError: calcElements is not defined
+//     at updateMathCalculations (GE/:532:33)
+//     at updateLabels (GE/:526:13)
 
+const calcElements = {
+            carrierFreq: document.getElementById('calcCarrierFreq'),
+            pilotFreq: document.getElementById('calcPilotFreq'),
+            msgFreq: document.getElementById('calcMsgFreq'),
+            eqMsgFreq: document.getElementById('eqMsgFreq'),
+            eqMsgFreq2: document.getElementById('eqMsgFreq2'),
+            eqMsgFreq3: document.getElementById('eqMsgFreq3'),
+            eqCarrierFreq: document.getElementById('eqCarrierFreq'),
+            eqCarrierFreq2: document.getElementById('eqCarrierFreq2'),
+            eqPilotFreq: document.getElementById('eqPilotFreq'),
+            powerEfficiency: document.getElementById('powerEfficiency'),
+            powerRatio: document.getElementById('powerRatio'),
+            msgBandwidth: document.getElementById('msgBandwidth'),
+            pilotComponents: document.getElementById('pilotComponents'),
+            noPilotComponents: document.getElementById('noPilotComponents')
+        };
         function updateLabels() {
             carrierFreqVal.textContent = carrierFreq.value;
             pilotFreqVal.textContent = pilotFreq.value;
             msgFreqVal.textContent = msgFreq.value;
+            updateMathCalculations();
+        }
+        function updateMathCalculations() {
+            const fc = parseInt(carrierFreq.value);
+            const fp = parseInt(pilotFreq.value);
+            const fm = parseInt(msgFreq.value);
+            updateWithHighlight(calcElements.carrierFreq, fc);
+            updateWithHighlight(calcElements.pilotFreq, fp);
+            updateWithHighlight(calcElements.msgFreq, fm);
+            updateWithHighlight(calcElements.eqCarrierFreq, fc);
+            updateWithHighlight(calcElements.eqCarrierFreq2, fc);
+            updateWithHighlight(calcElements.eqPilotFreq, fp);
+            updateWithHighlight(calcElements.eqMsgFreq, fm);
+            updateWithHighlight(calcElements.eqMsgFreq2, fm);
+            updateWithHighlight(calcElements.eqMsgFreq3, fm);
+            const powerRatio = Math.round(Math.pow(10, 16/10));
+            const efficiency = (1 / (1 + 1/powerRatio) * 100).toFixed(1);
+            updateWithHighlight(calcElements.powerEfficiency, efficiency);
+            updateWithHighlight(calcElements.powerRatio, powerRatio);
+            updateWithHighlight(calcElements.msgBandwidth, fm);
+            updateWithHighlight(calcElements.pilotComponents, `${fc} ± ${fm} Hz, ${fp} Hz`);
+            updateWithHighlight(calcElements.noPilotComponents, `${fc} ± ${fm} Hz`);
+        }
+        function updateWithHighlight(element, value) {
+            if (element) {
+                if (element.textContent != value) {
+                    element.textContent = value;
+                    element.classList.add('highlight');
+                    setTimeout(() => {
+                        element.classList.remove('highlight');
+                    }, 1000);
+                }
+            }
         }
 
         function generateSignals() {
@@ -673,6 +848,7 @@
             updateLabels();
             setTimeout(plot, 200);
         }
+        updateMathCalculations();
 
         // Quiz functionality
         const quizItems = document.querySelectorAll('.quiz-item');
