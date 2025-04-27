@@ -19,7 +19,7 @@
             text-align: center;
         }
         main {
-            padding: 2rem;
+            padding: 1rem;
         }
         section {
             margin-bottom: 3rem;
@@ -329,37 +329,41 @@
             <li>"Without Pilot" shows only the message-modulated carrier.</li>
         </ul>
 
-        <!-- Real-time calculations section -->
-        <div id="realTimeCalcs" class="real-time-calcs">
-            <h3>Real-time Calculations Based on Current Parameters</h3>
-            <div class="calculation-box">
-                <p><strong>Current Parameters:</strong></p>
+        <!-- Accordion for Proof -->
+        <div class="accordion">
+            <button class="accordion-button">Proof, Power Efficiency, and Bandwidth Analysis</button>
+            <div class="accordion-content">
+                <h3>Proof of the Equation</h3>
+                <p>The modulated signal with a pilot carrier is:</p>
+                <p style="font-family:monospace;">s(t) = (1 + m(t)) × cos(2πf<sub>c</sub>t) + 0.2 × cos(2πf<sub>p</sub>t)</p>
+                <p>Substituting <i>m(t)</i> = sin(2πf<sub>m</sub>t):</p>
+                <p style="font-family:monospace;">s(t) = (1 + sin(2πf<sub>m</sub>t)) × cos(2πf<sub>c</sub>t) + 0.2 × cos(2πf<sub>p</sub>t)</p>
+                <p>Expanding:</p>
+                <p style="font-family:monospace;">s(t) = cos(2πf<sub>c</sub>t) + sin(2πf<sub>m</sub>t) × cos(2πf<sub>c</sub>t) + 0.2 × cos(2πf<sub>p</sub>t)</p>
+                <p>The first term is the carrier, the second term is the message-modulated carrier, and the third term is the pilot carrier.</p>
+
+                <h3>Why Include the Pilot Carrier?</h3>
+                <p>The pilot carrier term <b>+ 0.2 × cos(2πf<sub>p</sub>t)</b> serves as a frequency reference for demodulation. It is attenuated (scaled by 0.2) to minimize interference with the main signal while still being detectable by the receiver.</p>
+                <p>In Single Sideband (SSB) systems, the pilot carrier helps the receiver reconstruct the suppressed carrier for coherent demodulation. Without it, the receiver would struggle to decode the signal accurately.</p>
+                <p>The attenuation factor (0.2) corresponds to a 16 dB reduction in power, ensuring the pilot carrier does not dominate the transmitted power.</p>
+
+                <h3>Power Efficiency</h3>
+                <p>The total transmitted power is the sum of the power in the carrier, sidebands, and pilot:</p>
+                <p style="font-family:monospace;">P<sub>t</sub> = P<sub>carrier</sub> + P<sub>sidebands</sub> + P<sub>pilot</sub></p>
+                <p>For a pilot attenuated by 16 dB:</p>
+                <p style="font-family:monospace;">P<sub>pilot</sub> = P<sub>sidebands</sub> × 10<sup>-16/10</sup> ≈ 0.025 × P<sub>sidebands</sub></p>
+                <p>Total power:</p>
+                <p style="font-family:monospace;">P<sub>t</sub> = P<sub>sidebands</sub> (1 + 0.025)</p>
+                <p>Power efficiency:</p>
+                <p style="font-family:monospace;">η = P<sub>sidebands</sub> / P<sub>t</sub> = 1 / (1 + 0.025) ≈ 97.6%</p>
+
+                <h3>Bandwidth Analysis</h3>
+                <p>The bandwidth of the modulated signal is determined by the highest frequency component:</p>
                 <ul>
-                    <li>Carrier Frequency (f<sub>c</sub>): <span id="calcCarrierFreq">1000</span> Hz</li>
-                    <li>Pilot Frequency (f<sub>p</sub>): <span id="calcPilotFreq">100</span> Hz</li>
-                    <li>Message Frequency (f<sub>m</sub>): <span id="calcMsgFreq">10</span> Hz</li>
+                    <li>Without pilot: Bandwidth = 2 × f<sub>m</sub> (message bandwidth)</li>
+                    <li>With pilot: Bandwidth = 2 × f<sub>m</sub> + negligible pilot bandwidth</li>
                 </ul>
-                
-                <p><strong>Signal Equations with Current Values:</strong></p>
-                <div class="math-formula">
-                    <p>m(t) = sin(2π × <span id="eqMsgFreq">10</span> × t)</p>
-                    <p>s<sub>with-pilot</sub>(t) = (1 + sin(2π × <span id="eqMsgFreq2">10</span> × t)) × cos(2π × <span id="eqCarrierFreq">1000</span> × t) + 0.2 × cos(2π × <span id="eqPilotFreq">100</span> × t)</p>
-                    <p>s<sub>without-pilot</sub>(t) = (1 + sin(2π × <span id="eqMsgFreq3">10</span> × t)) × cos(2π × <span id="eqCarrierFreq2">1000</span> × t)</p>
-                </div>
-                
-                <p><strong>Power Calculations:</strong></p>
-                <div class="math-formula">
-                    <p>For Pilot-Carrier SSB, with pilot attenuated by 16 dB:</p>
-                    <p>Power efficiency = <span id="powerEfficiency">97.6</span>%</p>
-                    <p>Ratio of pilot power to sideband power: 1:<span id="powerRatio">40</span></p>
-                </div>
-                
-                <p><strong>Frequency Domain Analysis:</strong></p>
-                <div class="math-formula">
-                    <p>Message bandwidth = <span id="msgBandwidth">10</span> Hz</p>
-                    <p>With Pilot: Components at f<sub>c</sub> ± f<sub>m</sub> and f<sub>p</sub> = <span id="pilotComponents">1000 ± 10 Hz, 100 Hz</span></p>
-                    <p>Without Pilot: Components only at f<sub>c</sub> ± f<sub>m</sub> = <span id="noPilotComponents">1000 ± 10 Hz</span></p>
-                </div>
+                <p>Thus, the pilot carrier adds minimal bandwidth overhead.</p>
             </div>
         </div>
     </section>
@@ -616,6 +620,62 @@
             text-align: center;
         }
     }
+
+    /* Accordion Styles */
+    .accordion {
+        margin-top: 20px;
+    }
+
+    .accordion-button {
+        background-color: #004080;
+        color: white;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        text-align: left;
+        width: 100%;
+        font-size: 1rem;
+        transition: background-color 0.3s;
+    }
+
+    .accordion-button:hover {
+        background-color: #003060;
+    }
+
+    .accordion-content {
+        display: none;
+        padding: 15px;
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        margin-top: 10px;
+    }
+
+    .accordion-content h3 {
+        margin-top: 0;
+    }
+
+    .accordion-content p {
+        margin: 10px 0;
+    }
+
+    .accordion-content ul {
+        margin: 10px 0;
+        padding-left: 20px;
+    }
+
+    /* Responsive Accordion */
+    @media (max-width: 600px) {
+        .accordion-button {
+            font-size: 0.9rem;
+            padding: 8px 12px;
+        }
+
+        .accordion-content {
+            padding: 10px;
+        }
+    }
 </style>
 
 <!-- Footer with attribution -->
@@ -707,14 +767,6 @@
         const carrierFreqVal = document.getElementById('carrierFreqVal');
         const pilotFreqVal = document.getElementById('pilotFreqVal');
         const msgFreqVal = document.getElementById('msgFreqVal');
-// GE/:532  Uncaught ReferenceError: calcElements is not defined
-// at updateMathCalculations (GE/:532:33)
-//     at updateLabels (GE/:526:13)
-//     at HTMLDocument.<anonymous> (GE/:636:13)
-// 50GE/:532  Uncaught ReferenceError: calcElements is not defined
-//     at updateMathCalculations (GE/:532:33)
-//     at updateLabels (GE/:526:13)
-
 const calcElements = {
             carrierFreq: document.getElementById('calcCarrierFreq'),
             pilotFreq: document.getElementById('calcPilotFreq'),
@@ -888,6 +940,15 @@ const calcElements = {
                     }
                 });
             });
+        });
+
+        // Accordion functionality
+        const accordionButton = document.querySelector('.accordion-button');
+        const accordionContent = document.querySelector('.accordion-content');
+
+        accordionButton.addEventListener('click', function () {
+            accordionContent.style.display =
+                accordionContent.style.display === 'block' ? 'none' : 'block';
         });
     });
 </script>
