@@ -99,9 +99,12 @@
 </section>
 
 <!-- Amplitude Modulation & Demodulation Demo Section -->
-<section id="amDemoSection" style="max-width:800px;margin:2.5rem auto 2rem auto;padding:2rem 2.5rem;background:rgba(255,255,255,0.97);border-radius:18px;box-shadow:0 4px 24px 0 rgba(63,69,81,0.10);">
+<section id="amDemoSection" style="max-width:900px;margin:2.5rem auto 2rem auto;padding:2rem 2.5rem;background:rgba(255,255,255,0.97);border-radius:18px;box-shadow:0 4px 24px 0 rgba(63,69,81,0.10);">
     <h2 style="color:#1a4e8a;">Amplitude Modulation & Demodulation Demo</h2>
-    <button id="amTheoryBtn" style="margin-bottom:1em;padding:0.5em 1.2em;background:#e3f0ff;color:#1a4e8a;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">Show/Hide Theory</button>
+    <div style="display:flex;gap:1em;flex-wrap:wrap;">
+        <button id="amTheoryBtn" style="margin-bottom:1em;padding:0.5em 1.2em;background:#e3f0ff;color:#1a4e8a;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">Show/Hide Theory</button>
+        <button id="amMathBtn" style="margin-bottom:1em;padding:0.5em 1.2em;background:#e3f0ff;color:#1a4e8a;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">Show/Hide Math</button>
+    </div>
     <div id="amTheory" style="display:none;margin-bottom:1.5em;text-align:left;">
         <h3>Theory of Amplitude Modulation (AM)</h3>
         <p>
@@ -119,6 +122,33 @@
             <li><b>Advantages:</b> Simple implementation, low cost.</li>
             <li><b>Disadvantages:</b> Susceptible to noise, less power efficient than SSB.</li>
         </ul>
+    </div>
+    <div id="amMath" style="display:none;margin-bottom:1.5em;text-align:left;">
+        <h3>Mathematical Model (Dynamic)</h3>
+        <p>
+            <b>Message Signal:</b><br>
+            <span style="font-family:monospace;">
+                m(t) = <span id="mathAmMsgAmp"></span> × sin(2π × <span id="mathAmMsgFreq"></span> × t)
+            </span>
+        </p>
+        <p>
+            <b>Carrier Signal:</b><br>
+            <span style="font-family:monospace;">
+                c(t) = <span id="mathAmCarrierAmp"></span> × cos(2π × <span id="mathAmCarrierFreq"></span> × t)
+            </span>
+        </p>
+        <p>
+            <b>AM Modulated Signal:</b><br>
+            <span style="font-family:monospace;">
+                s(t) = [<span id="mathAmCarrierAmp2"></span> + <span id="mathAmMsgAmp2"></span> × sin(2π × <span id="mathAmMsgFreq2"></span> × t)] × cos(2π × <span id="mathAmCarrierFreq2"></span> × t)
+            </span>
+        </p>
+        <p>
+            <b>Envelope (Demodulated):</b><br>
+            <span style="font-family:monospace;">
+                |<span id="mathAmCarrierAmp3"></span> + <span id="mathAmMsgAmp3"></span> × sin(2π × <span id="mathAmMsgFreq3"></span> × t)|
+            </span>
+        </p>
     </div>
     <div class="controls" style="display:flex;flex-wrap:wrap;gap:1.5em;margin-bottom:1.2em;">
         <label>
@@ -142,15 +172,20 @@
             <span id="amCarrierAmpVal">1</span>
         </label>
     </div>
-    <div class="chart-container">
-        <canvas id="amChart"></canvas>
+    <div class="chart-container" style="overflow-x:auto;">
+        <canvas id="amMsgCarrierChart" style="min-width:700px;max-width:1200px;"></canvas>
     </div>
-    <div class="chart-container">
-        <canvas id="amDemodChart"></canvas>
+    <div class="chart-container" style="overflow-x:auto;">
+        <canvas id="amChart" style="min-width:700px;max-width:1200px;"></canvas>
+    </div>
+    <div class="chart-container" style="overflow-x:auto;">
+        <canvas id="amDemodChart" style="min-width:700px;max-width:1200px;"></canvas>
     </div>
     <div style="margin-top:18px;color:#1a4e8a;font-size:1.05rem;">
         <b>How to use:</b> Adjust the sliders to change carrier/message frequencies and amplitudes.<br>
-        The first chart shows the AM signal. The second chart shows the demodulated (envelope detected) signal.
+        The first chart shows the message and carrier signals. The second chart shows the AM signal and its envelope. The third chart shows the demodulated (envelope detected) signal.<br>
+        <b>Tip:</b> Scroll horizontally to explore the waveforms in detail.<br>
+        <b>Note:</b> The demodulated signal (envelope) closely follows the original message signal, but may not be exactly the same due to effects like rectification, DC offset, and imperfect envelope detection. For ideal AM with proper modulation index, the envelope matches the message shape.
     </div>
 </section>
 
@@ -433,7 +468,11 @@ document.getElementById('amTheoryBtn').onclick = function() {
     const theory = document.getElementById('amTheory');
     theory.style.display = (theory.style.display === 'none' || theory.style.display === '') ? 'block' : 'none';
 };
-
+// --- AM Math Toggle ---
+document.getElementById('amMathBtn').onclick = function() {
+    const math = document.getElementById('amMath');
+    math.style.display = (math.style.display === 'none' || math.style.display === '') ? 'block' : 'none';
+};
 // --- AM Demo Simulation ---
 if (document.getElementById('amChart')) {
     const amCarrierFreq = document.getElementById('amCarrierFreq');
@@ -445,15 +484,42 @@ if (document.getElementById('amChart')) {
     const amMsgAmpVal = document.getElementById('amMsgAmpVal');
     const amCarrierAmpVal = document.getElementById('amCarrierAmpVal');
 
+    // Math formula spans
+    const mathIds = [
+        'mathAmMsgAmp','mathAmMsgFreq','mathAmCarrierAmp','mathAmCarrierFreq',
+        'mathAmCarrierAmp2','mathAmMsgAmp2','mathAmMsgFreq2','mathAmCarrierFreq2',
+        'mathAmCarrierAmp3','mathAmMsgAmp3','mathAmMsgFreq3'
+    ];
+    function updateAMMath() {
+        const vals = {
+            msgAmp: amMsgAmp.value,
+            msgFreq: amMsgFreq.value,
+            carrierAmp: amCarrierAmp.value,
+            carrierFreq: amCarrierFreq.value
+        };
+        document.getElementById('mathAmMsgAmp').textContent = vals.msgAmp;
+        document.getElementById('mathAmMsgFreq').textContent = vals.msgFreq;
+        document.getElementById('mathAmCarrierAmp').textContent = vals.carrierAmp;
+        document.getElementById('mathAmCarrierFreq').textContent = vals.carrierFreq;
+        document.getElementById('mathAmCarrierAmp2').textContent = vals.carrierAmp;
+        document.getElementById('mathAmMsgAmp2').textContent = vals.msgAmp;
+        document.getElementById('mathAmMsgFreq2').textContent = vals.msgFreq;
+        document.getElementById('mathAmCarrierFreq2').textContent = vals.carrierFreq;
+        document.getElementById('mathAmCarrierAmp3').textContent = vals.carrierAmp;
+        document.getElementById('mathAmMsgAmp3').textContent = vals.msgAmp;
+        document.getElementById('mathAmMsgFreq3').textContent = vals.msgFreq;
+    }
+
     function updateAMVals() {
         amCarrierFreqVal.textContent = amCarrierFreq.value;
         amMsgFreqVal.textContent = amMsgFreq.value;
         amMsgAmpVal.textContent = amMsgAmp.value;
         amCarrierAmpVal.textContent = amCarrierAmp.value;
+        updateAMMath();
     }
 
     // Chart.js setup
-    let amChart, amDemodChart;
+    let amMsgCarrierChart, amChart, amDemodChart;
     function plotAM() {
         const N = 1000;
         const fs = 10000;
@@ -464,10 +530,35 @@ if (document.getElementById('amChart')) {
         const fm = parseFloat(amMsgFreq.value);
 
         const msg = t.map(x => Am * Math.sin(2 * Math.PI * fm * x));
+        const carrier = t.map(x => Ac * Math.cos(2 * Math.PI * fc * x));
         const am = t.map((x, i) => (Ac + msg[i]) * Math.cos(2 * Math.PI * fc * x));
         // Envelope detection (rectify + lowpass)
         const envelope = msg.map(m => Math.abs(Ac + m));
 
+        // Message and Carrier Chart
+        if (!amMsgCarrierChart) {
+            amMsgCarrierChart = new Chart(document.getElementById('amMsgCarrierChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: t,
+                    datasets: [
+                        { label: 'Message Signal', data: msg, borderColor: '#e67e22', borderWidth: 1, pointRadius: 0, fill: false },
+                        { label: 'Carrier Signal', data: carrier, borderColor: '#1a4e8a', borderWidth: 1, pointRadius: 0, fill: false }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: true } },
+                    scales: { x: { display: false }, y: { display: true } }
+                }
+            });
+        } else {
+            amMsgCarrierChart.data.datasets[0].data = msg;
+            amMsgCarrierChart.data.datasets[1].data = carrier;
+            amMsgCarrierChart.update();
+        }
+
+        // AM Chart
         if (!amChart) {
             amChart = new Chart(document.getElementById('amChart').getContext('2d'), {
                 type: 'line',
