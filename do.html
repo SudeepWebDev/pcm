@@ -3,220 +3,651 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital Oscilloscope</title>
+    <title>Modular Audio Workstation</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             background-color: #222;
             color: #eee;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 20px;
+            margin: 0;
+            padding: 20px;
         }
         
-        #oscilloscope {
-            background-color: #000;
-            border: 3px solid #444;
+        .workspace {
+            display: flex;
+            height: calc(100vh - 100px);
+        }
+        
+        .module-palette {
+            width: 200px;
+            background-color: #333;
+            padding: 10px;
             border-radius: 5px;
+            margin-right: 20px;
+            overflow-y: auto;
         }
         
-        .controls {
-            margin: 20px 0;
-            display: flex;
-            gap: 15px;
+        .canvas-container {
+            flex-grow: 1;
+            background-color: #111;
+            border-radius: 5px;
+            position: relative;
         }
         
-        button, select {
+        .module {
             background-color: #444;
-            color: #eee;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
+            border: 2px solid #666;
+            border-radius: 5px;
+            width: 180px;
+            padding: 10px;
+            margin-bottom: 10px;
+            position: absolute;
+            user-select: none;
+        }
+        
+        .module-header {
+            color: #fff;
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        
+        .socket {
+            width: 15px;
+            height: 15px;
+            background-color: #ddd;
+            border-radius: 50%;
+            margin: 5px;
+            display: inline-block;
+        }
+        
+        .input-socket {
+            background-color: #f55;
+        }
+        
+        .output-socket {
+            background-color: #5f5;
+        }
+        
+        .knob {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #888, #444);
+            margin: 0 auto;
+            position: relative;
+        }
+        
+        .knob:after {
+            content: '';
+            position: absolute;
+            width: 2px;
+            height: 15px;
+            background-color: #fff;
+            top: 5px;
+            left: 50%;
+            transform-origin: bottom;
+        }
+        
+        .module-item {
+            padding: 10px;
+            margin-bottom: 5px;
+            background-color: #555;
+            border-radius: 3px;
             cursor: pointer;
         }
         
-        button:hover, select:hover {
-            background-color: #555;
-        }
-        
-        .info {
-            margin-top: 10px;
-            text-align: center;
+        .cable {
+            position: absolute;
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
-    <h1>Digital Oscilloscope</h1>
+    <h1>Modular Audio Workstation</h1>
     
-    <canvas id="oscilloscope" width="800" height="400"></canvas>
-    
-    <div class="controls">
-        <button id="startBtn">Start</button>
-        <button id="stopBtn">Stop</button>
-        <select id="timeScale">
-            <option value="1">1x</option>
-            <option value="2" selected>2x</option>
-            <option value="5">5x</option>
-            <option value="10">10x</option>
-        </select>
-        <select id="amplitudeScale">
-            <option value="0.5">0.5x</option>
-            <option value="1" selected>1x</option>
-            <option value="2">2x</option>
-            <option value="5">5x</option>
-        </select>
-    </div>
-    
-    <div class="info">
-        <p>Use the microphone to capture audio signals or generate test signals</p>
+    <div class="workspace">
+        <div class="module-palette">
+            <h3>Modules</h3>
+            <div class="module-item" data-type="oscillator">Oscillator</div>
+            <div class="module-item" data-type="microphone">Microphone Input</div>
+            <div class="module-item" data-type="amplifier">Amplifier</div>
+            <div class="module-item" data-type="filter">Filter</div>
+            <div class="module-item" data-type="am-modulator">AM Modulator</div>
+            <div class="module-item" data-type="ad-envelope">AD Envelope</div>
+            <div class="module-item" data-type="oscilloscope">Oscilloscope</div>
+            <div class="module-item" data-type="output">Audio Output</div>
+        </div>
+        
+        <div class="canvas-container" id="patchArea">
+            <!-- Modules will be added here dynamically -->
+        </div>
     </div>
     
     <script>
-        const canvas = document.getElementById('oscilloscope');
-        const ctx = canvas.getContext('2d');
-        const startBtn = document.getElementById('startBtn');
-        const stopBtn = document.getElementById('stopBtn');
-        const timeScale = document.getElementById('timeScale');
-        const amplitudeScale = document.getElementById('amplitudeScale');
-        
+        // Audio context
         let audioContext;
-        let analyser;
-        let dataArray;
-        let source;
-        let animationId;
-        let isRunning = false;
+        const modules = new Map();
+        let cables = [];
+        let activeCable = null;
         
-        // Initialize grid
-        function drawGrid() {
-            const width = canvas.width;
-            const height = canvas.height;
-            
-            ctx.beginPath();
-            ctx.strokeStyle = '#333';
-            ctx.lineWidth = 1;
-            
-            // Draw vertical grid lines
-            for (let x = 0; x < width; x += 50) {
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, height);
+        // Initialize audio context immediately when the page loads
+        function initAudioContext() {
+            if (window.AudioContext || window.webkitAudioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } else {
+                alert("Your browser does not support the Web Audio API. Please use a modern browser.");
             }
-            
-            // Draw horizontal grid lines
-            for (let y = 0; y < height; y += 50) {
-                ctx.moveTo(0, y);
-                ctx.lineTo(width, y);
-            }
-            
-            ctx.stroke();
-            
-            // Center line
-            ctx.beginPath();
-            ctx.strokeStyle = '#555';
-            ctx.lineWidth = 1;
-            ctx.moveTo(0, height / 2);
-            ctx.lineTo(width, height / 2);
-            ctx.stroke();
         }
         
-        // Draw the waveform
-        function draw() {
-            animationId = requestAnimationFrame(draw);
+        // Ensure audio context is initialized on page load
+        window.addEventListener('load', initAudioContext);
+        
+        // Module definitions
+        const moduleTemplates = {
+            oscillator: {
+                title: "Oscillator",
+                inputs: ["FM"],
+                outputs: ["Out"],
+                controls: [
+                    { type: "select", options: ["sine", "square", "sawtooth", "triangle"], label: "Wave" },
+                    { type: "knob", min: 20, max: 2000, default: 440, label: "Frequency" }
+                ],
+                create: function() {
+                    const osc = audioContext.createOscillator();
+                    osc.type = "sine";
+                    osc.frequency.value = 440;
+                    osc.start();
+                    return osc;
+                }
+            },
+            microphone: {
+                title: "Microphone",
+                inputs: [],
+                outputs: ["Out"],
+                controls: [
+                    { type: "button", label: "Enable" }
+                ],
+                create: async function() {
+                    try {
+                        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        return audioContext.createMediaStreamSource(stream);
+                    } catch(err) {
+                        console.error("Microphone access error:", err);
+                        return null;
+                    }
+                }
+            },
+            amplifier: {
+                title: "Amplifier",
+                inputs: ["In", "CV"],
+                outputs: ["Out"],
+                controls: [
+                    { type: "knob", min: 0, max: 2, default: 1, label: "Gain" }
+                ],
+                create: function() {
+                    const gain = audioContext.createGain();
+                    gain.gain.value = 1;
+                    return gain;
+                }
+            },
+            filter: {
+                title: "Filter",
+                inputs: ["In", "Cutoff CV"],
+                outputs: ["Out"],
+                controls: [
+                    { type: "select", options: ["lowpass", "highpass", "bandpass"], label: "Type" },
+                    { type: "knob", min: 20, max: 20000, default: 1000, label: "Cutoff" },
+                    { type: "knob", min: 0, max: 30, default: 1, label: "Resonance" }
+                ],
+                create: function() {
+                    const filter = audioContext.createBiquadFilter();
+                    filter.type = "lowpass";
+                    filter.frequency.value = 1000;
+                    filter.Q.value = 1;
+                    return filter;
+                }
+            },
+            "am-modulator": {
+                title: "AM Modulator",
+                inputs: ["Carrier", "Modulator"],
+                outputs: ["Out"],
+                controls: [
+                    { type: "knob", min: 0, max: 1, default: 0.5, label: "Depth" }
+                ],
+                create: function() {
+                    // Create AM modulation with gain nodes
+                    const modGain = audioContext.createGain();
+                    modGain.gain.value = 0.5;
+                    return modGain;
+                }
+            },
+            "ad-envelope": {
+                title: "AD Envelope",
+                inputs: ["Trigger"],
+                outputs: ["Out"],
+                controls: [
+                    { type: "knob", min: 0.01, max: 2, default: 0.1, label: "Attack" },
+                    { type: "knob", min: 0.01, max: 5, default: 0.5, label: "Decay" },
+                    { type: "button", label: "Trigger" }
+                ],
+                create: function() {
+                    const env = audioContext.createGain();
+                    env.gain.value = 0;
+                    return env;
+                }
+            },
+            oscilloscope: {
+                title: "Oscilloscope",
+                inputs: ["In"],
+                outputs: [],
+                controls: [],
+                create: function() {
+                    const analyser = audioContext.createAnalyser();
+                    analyser.fftSize = 2048;
+                    return analyser;
+                }
+            },
+            output: {
+                title: "Audio Output",
+                inputs: ["In"],
+                outputs: [],
+                controls: [
+                    { type: "knob", min: 0, max: 1, default: 0.5, label: "Volume" }
+                ],
+                create: function() {
+                    const output = audioContext.createGain();
+                    output.gain.value = 0.5;
+                    output.connect(audioContext.destination);
+                    return output;
+                }
+            }
+        };
+        
+        // Set up drag and drop for module creation
+        const moduleItems = document.querySelectorAll('.module-item');
+        moduleItems.forEach(item => {
+            item.addEventListener('dragstart', event => {
+                event.dataTransfer.setData('moduleType', item.dataset.type);
+            });
+            item.draggable = true;
+        });
+        
+        const patchArea = document.getElementById('patchArea');
+        patchArea.addEventListener('dragover', event => {
+            event.preventDefault();
+        });
+        
+        patchArea.addEventListener('drop', event => {
+            event.preventDefault();
+            const moduleType = event.dataTransfer.getData('moduleType');
+            if (moduleType) {
+                createModule(moduleType, event.clientX - patchArea.getBoundingClientRect().left, 
+                             event.clientY - patchArea.getBoundingClientRect().top);
+            }
+        });
+        
+        // Create a module in the patch area
+        async function createModule(type, x, y) {
+            if (!audioContext) initAudioContext();
             
-            const width = canvas.width;
-            const height = canvas.height;
-            const bufferLength = analyser.frequencyBinCount;
+            const template = moduleTemplates[type];
+            if (!template) return;
             
-            analyser.getByteTimeDomainData(dataArray);
+            const moduleId = `module-${Date.now()}`;
+            const moduleEl = document.createElement('div');
+            moduleEl.className = 'module';
+            moduleEl.id = moduleId;
+            moduleEl.style.left = `${x}px`;
+            moduleEl.style.top = `${y}px`;
             
-            // Clear and draw grid
-            ctx.clearRect(0, 0, width, height);
-            drawGrid();
+            // Create module header
+            const header = document.createElement('div');
+            header.className = 'module-header';
+            header.textContent = template.title;
+            moduleEl.appendChild(header);
             
-            // Draw waveform
-            ctx.beginPath();
-            ctx.strokeStyle = '#0f0';
-            ctx.lineWidth = 2;
+            // Make module draggable
+            makeElementDraggable(moduleEl);
             
-            const timeScaleValue = parseFloat(timeScale.value);
-            const amplitudeScaleValue = parseFloat(amplitudeScale.value);
-            const sliceWidth = (width * timeScaleValue) / bufferLength;
+            // Create inputs
+            if (template.inputs.length > 0) {
+                const inputsDiv = document.createElement('div');
+                inputsDiv.className = 'module-inputs';
+                template.inputs.forEach((input, i) => {
+                    const inputDiv = document.createElement('div');
+                    const socket = document.createElement('div');
+                    socket.className = 'socket input-socket';
+                    socket.dataset.socketType = 'input';
+                    socket.dataset.socketIndex = i;
+                    socket.dataset.socketName = input;
+                    socket.dataset.moduleId = moduleId;
+                    inputDiv.appendChild(socket);
+                    inputDiv.appendChild(document.createTextNode(input));
+                    inputsDiv.appendChild(inputDiv);
+                    
+                    // Socket connection handling
+                    socket.addEventListener('mousedown', startConnection);
+                });
+                moduleEl.appendChild(inputsDiv);
+            }
             
-            let x = 0;
-            for (let i = 0; i < bufferLength; i++) {
-                const v = (dataArray[i] / 128.0) - 1; // Convert to -1 to +1 range
-                const y = (height / 2) * (1 - v * amplitudeScaleValue);
+            // Create controls based on template
+            if (template.controls.length > 0) {
+                const controlsDiv = document.createElement('div');
+                controlsDiv.className = 'module-controls';
+                template.controls.forEach((control, i) => {
+                    const controlDiv = document.createElement('div');
+                    controlDiv.className = 'control';
+                    
+                    if (control.type === 'knob') {
+                        const knob = document.createElement('div');
+                        knob.className = 'knob';
+                        knob.dataset.min = control.min;
+                        knob.dataset.max = control.max;
+                        knob.dataset.value = control.default;
+                        knob.dataset.controlIndex = i;
+                        controlDiv.appendChild(knob);
+                    } else if (control.type === 'select') {
+                        const select = document.createElement('select');
+                        control.options.forEach(option => {
+                            const opt = document.createElement('option');
+                            opt.value = option;
+                            opt.textContent = option;
+                            select.appendChild(opt);
+                        });
+                        select.dataset.controlIndex = i;
+                        controlDiv.appendChild(select);
+                    } else if (control.type === 'button') {
+                        const button = document.createElement('button');
+                        button.textContent = control.label;
+                        button.dataset.controlIndex = i;
+                        controlDiv.appendChild(button);
+                    }
+                    
+                    const label = document.createElement('div');
+                    label.className = 'control-label';
+                    label.textContent = control.label;
+                    controlDiv.appendChild(label);
+                    
+                    controlsDiv.appendChild(controlDiv);
+                });
+                moduleEl.appendChild(controlsDiv);
+            }
+            
+            // Create outputs
+            if (template.outputs.length > 0) {
+                const outputsDiv = document.createElement('div');
+                outputsDiv.className = 'module-outputs';
+                template.outputs.forEach((output, i) => {
+                    const outputDiv = document.createElement('div');
+                    const socket = document.createElement('div');
+                    socket.className = 'socket output-socket';
+                    socket.dataset.socketType = 'output';
+                    socket.dataset.socketIndex = i;
+                    socket.dataset.socketName = output;
+                    socket.dataset.moduleId = moduleId;
+                    outputDiv.appendChild(socket);
+                    outputDiv.appendChild(document.createTextNode(output));
+                    outputsDiv.appendChild(outputDiv);
+                    
+                    // Socket connection handling
+                    socket.addEventListener('mousedown', startConnection);
+                });
+                moduleEl.appendChild(outputsDiv);
+            }
+            
+            patchArea.appendChild(moduleEl);
+            
+            // Create the actual audio node
+            const audioNode = await template.create();
+            if (audioNode) {
+                modules.set(moduleId, {
+                    element: moduleEl,
+                    audioNode: audioNode,
+                    type: type
+                });
                 
-                if (i === 0) {
-                    ctx.moveTo(x, y);
-                } else {
-                    ctx.lineTo(x, y);
+                // Special handling for oscilloscope
+                if (type === 'oscilloscope') {
+                    setupOscilloscope(moduleId, audioNode);
+                }
+            }
+        }
+        
+        // Make an element draggable
+        function makeElementDraggable(element) {
+            let offsetX, offsetY;
+            
+            element.addEventListener('mousedown', startDrag);
+            
+            function startDrag(e) {
+                if (e.target !== element && !e.target.classList.contains('module-header')) return;
+                
+                offsetX = e.clientX - element.getBoundingClientRect().left;
+                offsetY = e.clientY - element.getBoundingClientRect().top;
+                
+                document.addEventListener('mousemove', drag);
+                document.addEventListener('mouseup', stopDrag);
+                
+                e.preventDefault();
+            }
+            
+            function drag(e) {
+                const rect = patchArea.getBoundingClientRect();
+                element.style.left = (e.clientX - rect.left - offsetX) + 'px';
+                element.style.top = (e.clientY - rect.top - offsetY) + 'px';
+                
+                // Update any connected cables
+                updateCables();
+            }
+            
+            function stopDrag() {
+                document.removeEventListener('mousemove', drag);
+                document.removeEventListener('mouseup', stopDrag);
+            }
+        }
+        
+        // Handle socket connections
+        function startConnection(e) {
+            const socket = e.target;
+            
+            // Create a cable element
+            const cable = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            cable.classList.add('cable');
+            cable.style.position = 'absolute';
+            cable.style.left = '0';
+            cable.style.top = '0';
+            cable.style.width = '100%';
+            cable.style.height = '100%';
+            cable.style.pointerEvents = 'none';
+            cable.style.zIndex = '1000';
+            
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path.setAttribute('stroke', socket.dataset.socketType === 'output' ? '#5f5' : '#f55');
+            path.setAttribute('stroke-width', '3');
+            path.setAttribute('fill', 'none');
+            
+            cable.appendChild(path);
+            patchArea.appendChild(cable);
+            
+            activeCable = {
+                element: cable,
+                path: path,
+                sourceSocket: socket,
+                sourcePosition: getSocketPosition(socket)
+            };
+            
+            document.addEventListener('mousemove', dragCable);
+            document.addEventListener('mouseup', endConnection);
+        }
+        
+        function dragCable(e) {
+            if (!activeCable) return;
+            
+            const rect = patchArea.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            const sourcePos = activeCable.sourcePosition;
+            const path = `M ${sourcePos.x} ${sourcePos.y} C ${sourcePos.x + 50} ${sourcePos.y}, ${mouseX - 50} ${mouseY}, ${mouseX} ${mouseY}`;
+            
+            activeCable.path.setAttribute('d', path);
+        }
+        
+        function endConnection(e) {
+            document.removeEventListener('mousemove', dragCable);
+            document.removeEventListener('mouseup', endConnection);
+            
+            if (!activeCable) return;
+            
+            const targetSocket = getSocketUnderMouse(e);
+            
+            if (targetSocket) {
+                const sourceType = activeCable.sourceSocket.dataset.socketType;
+                const targetType = targetSocket.dataset.socketType;
+                
+                // Only connect output -> input
+                if ((sourceType === 'output' && targetType === 'input') || 
+                    (sourceType === 'input' && targetType === 'output')) {
+                    
+                    const source = sourceType === 'output' ? activeCable.sourceSocket : targetSocket;
+                    const target = sourceType === 'output' ? targetSocket : activeCable.sourceSocket;
+                    
+                    // Create permanent connection
+                    createCableConnection(source, target, activeCable.element);
+                    
+                    // Connect the audio nodes
+                    connectAudioNodes(source.dataset.moduleId, target.dataset.moduleId);
+                    return;
+                }
+            }
+            
+            // If we got here, connection was invalid - remove temporary cable
+            if (activeCable.element && activeCable.element.parentNode) {
+                activeCable.element.parentNode.removeChild(activeCable.element);
+            }
+            activeCable = null;
+        }
+        
+        function getSocketUnderMouse(e) {
+            const elements = document.elementsFromPoint(e.clientX, e.clientY);
+            for (let element of elements) {
+                if (element.classList && element.classList.contains('socket')) {
+                    return element;
+                }
+            }
+            return null;
+        }
+        
+        function getSocketPosition(socket) {
+            const rect = socket.getBoundingClientRect();
+            const patchRect = patchArea.getBoundingClientRect();
+            return {
+                x: rect.left + rect.width / 2 - patchRect.left,
+                y: rect.top + rect.height / 2 - patchRect.top
+            };
+        }
+        
+        function createCableConnection(sourceSocket, targetSocket, cableElement) {
+            const connection = {
+                source: {
+                    socket: sourceSocket,
+                    moduleId: sourceSocket.dataset.moduleId,
+                    position: getSocketPosition(sourceSocket)
+                },
+                target: {
+                    socket: targetSocket,
+                    moduleId: targetSocket.dataset.moduleId,
+                    position: getSocketPosition(targetSocket)
+                },
+                element: cableElement
+            };
+            
+            cables.push(connection);
+            updateCablePath(connection);
+        }
+        
+        function updateCablePath(cable) {
+            const sourcePos = getSocketPosition(cable.source.socket);
+            const targetPos = getSocketPosition(cable.target.socket);
+            
+            const dx = Math.abs(targetPos.x - sourcePos.x);
+            const bendFactor = Math.min(dx * 0.5, 100);
+            
+            const path = `M ${sourcePos.x} ${sourcePos.y} C ${sourcePos.x + bendFactor} ${sourcePos.y}, ${targetPos.x - bendFactor} ${targetPos.y}, ${targetPos.x} ${targetPos.y}`;
+            
+            cable.source.position = sourcePos;
+            cable.target.position = targetPos;
+            
+            const pathElement = cable.element.querySelector('path');
+            pathElement.setAttribute('d', path);
+        }
+        
+        function updateCables() {
+            cables.forEach(updateCablePath);
+        }
+        
+        function connectAudioNodes(sourceModuleId, targetModuleId) {
+            const sourceModule = modules.get(sourceModuleId);
+            const targetModule = modules.get(targetModuleId);
+            
+            if (sourceModule && targetModule) {
+                sourceModule.audioNode.connect(targetModule.audioNode);
+            }
+        }
+        
+        function setupOscilloscope(moduleId, analyser) {
+            // Create a canvas for the oscilloscope
+            const moduleEl = modules.get(moduleId).element;
+            const canvasContainer = document.createElement('div');
+            canvasContainer.className = 'scope-display';
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = 170;
+            canvas.height = 100;
+            canvasContainer.appendChild(canvas);
+            moduleEl.appendChild(canvasContainer);
+            
+            const ctx = canvas.getContext('2d');
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            
+            function drawOscilloscope() {
+                requestAnimationFrame(drawOscilloscope);
+                
+                analyser.getByteTimeDomainData(dataArray);
+                
+                ctx.fillStyle = 'rgb(0, 0, 0)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = 'rgb(0, 255, 0)';
+                ctx.beginPath();
+                
+                const sliceWidth = canvas.width * 1.0 / bufferLength;
+                let x = 0;
+                
+                for(let i = 0; i < bufferLength; i++) {
+                    const v = dataArray[i] / 128.0;
+                    const y = v * canvas.height/2;
+                    
+                    if(i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                    
+                    x += sliceWidth;
+                    if (x > canvas.width) break;
                 }
                 
-                x += sliceWidth;
-                if (x > width) break;
+                ctx.lineTo(canvas.width, canvas.height/2);
+                ctx.stroke();
             }
             
-            ctx.stroke();
+            drawOscilloscope();
         }
-        
-        // Start the oscilloscope
-        startBtn.addEventListener('click', () => {
-            if (isRunning) return;
-            
-            // Initialize audio context
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            analyser = audioContext.createAnalyser();
-            analyser.fftSize = 2048;
-            
-            const bufferLength = analyser.frequencyBinCount;
-            dataArray = new Uint8Array(bufferLength);
-            
-            // Get user microphone input
-            navigator.mediaDevices.getUserMedia({ audio: true })
-                .then(stream => {
-                    source = audioContext.createMediaStreamSource(stream);
-                    source.connect(analyser);
-                    
-                    isRunning = true;
-                    draw();
-                })
-                .catch(err => {
-                    console.error('Error accessing microphone:', err);
-                    alert('Error accessing microphone. Please check permissions.');
-                    
-                    // Create oscillator for demo if mic access fails
-                    createOscillator();
-                });
-        });
-        
-        // Create oscillator for demo
-        function createOscillator() {
-            const oscillator = audioContext.createOscillator();
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
-            
-            oscillator.connect(analyser);
-            oscillator.start();
-            
-            isRunning = true;
-            draw();
-        }
-        
-        // Stop the oscilloscope
-        stopBtn.addEventListener('click', () => {
-            if (!isRunning) return;
-            
-            cancelAnimationFrame(animationId);
-            if (audioContext && audioContext.state !== 'closed') {
-                audioContext.close();
-            }
-            
-            isRunning = false;
-        });
-        
-        // Initialize the display
-        drawGrid();
     </script>
 </body>
-</html></div></select>
+</html>
