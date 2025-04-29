@@ -63,7 +63,7 @@
 <section id="syllabusTOC" style="max-width:900px;margin:1.5rem auto 2rem auto;padding:1.5rem 2rem;background:rgba(245,250,255,0.97);border-radius:14px;box-shadow:0 2px 12px 0 rgba(63,69,81,0.07);">
     <h2 style="color:#1a4e8a;text-align:center;margin-bottom:1.2rem;">Syllabus Contents & Table of Contents</h2>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.2rem;">
-        <a class="toc-card topic-modulation" href="#demoPanel" style="display:flex;align-items:center;gap:0.8em;padding:1.1em 1em;background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(26,78,138,0.06);text-decoration:none;color:#18406a;transition:box-shadow 0.2s;">
+        <a class="toc-card topic-modulation" href="#amDemoSection" style="display:flex;align-items:center;gap:0.8em;padding:1.1em 1em;background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(26,78,138,0.06);text-decoration:none;color:#18406a;transition:box-shadow 0.2s;">
             <span style="font-size:1.7em;">🎚️</span>
             <span>Study of Amplitude Modulation</span>
         </a>
@@ -71,7 +71,7 @@
             <span style="font-size:1.7em;">📻</span>
             <span>Study of Frequency Modulation</span>
         </a>
-        <a class="toc-card topic-modulation" href="#mathSection" style="display:flex;align-items:center;gap:0.8em;padding:1.1em 1em;background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(26,78,138,0.06);text-decoration:none;color:#18406a;">
+        <a class="toc-card topic-modulation" href="#amDemoSection" style="display:flex;align-items:center;gap:0.8em;padding:1.1em 1em;background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(26,78,138,0.06);text-decoration:none;color:#18406a;">
             <span style="font-size:1.7em;">🧮</span>
             <span>Study of AM Demodulation</span>
         </a>
@@ -95,6 +95,62 @@
             <span style="font-size:1.7em;">🔗</span>
             <span>Study of Pulse Modulation</span>
         </a>
+    </div>
+</section>
+
+<!-- Amplitude Modulation & Demodulation Demo Section -->
+<section id="amDemoSection" style="max-width:800px;margin:2.5rem auto 2rem auto;padding:2rem 2.5rem;background:rgba(255,255,255,0.97);border-radius:18px;box-shadow:0 4px 24px 0 rgba(63,69,81,0.10);">
+    <h2 style="color:#1a4e8a;">Amplitude Modulation & Demodulation Demo</h2>
+    <button id="amTheoryBtn" style="margin-bottom:1em;padding:0.5em 1.2em;background:#e3f0ff;color:#1a4e8a;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">Show/Hide Theory</button>
+    <div id="amTheory" style="display:none;margin-bottom:1.5em;text-align:left;">
+        <h3>Theory of Amplitude Modulation (AM)</h3>
+        <p>
+            <b>Amplitude Modulation (AM)</b> is a technique where the amplitude of a high-frequency carrier wave is varied in proportion to the instantaneous value of the message (modulating) signal.<br>
+            <b>Mathematical Expression:</b><br>
+            <span style="font-family:monospace;">s(t) = [A<sub>c</sub> + m(t)] × cos(2πf<sub>c</sub>t)</span><br>
+            where <i>A<sub>c</sub></i> is the carrier amplitude, <i>m(t)</i> is the message signal, and <i>f<sub>c</sub></i> is the carrier frequency.
+        </p>
+        <h3>AM Demodulation (Envelope Detection)</h3>
+        <p>
+            The original message can be recovered from the AM signal using an <b>envelope detector</b>, which tracks the outer shape (envelope) of the modulated waveform.
+        </p>
+        <ul>
+            <li><b>Applications:</b> AM radio broadcasting, two-way radio, aircraft communication.</li>
+            <li><b>Advantages:</b> Simple implementation, low cost.</li>
+            <li><b>Disadvantages:</b> Susceptible to noise, less power efficient than SSB.</li>
+        </ul>
+    </div>
+    <div class="controls" style="display:flex;flex-wrap:wrap;gap:1.5em;margin-bottom:1.2em;">
+        <label>
+            Carrier Frequency (Hz):
+            <input type="range" id="amCarrierFreq" min="100" max="2000" value="1000">
+            <span id="amCarrierFreqVal">1000</span>
+        </label>
+        <label>
+            Message Frequency (Hz):
+            <input type="range" id="amMsgFreq" min="1" max="100" value="10">
+            <span id="amMsgFreqVal">10</span>
+        </label>
+        <label>
+            Message Amplitude:
+            <input type="range" id="amMsgAmp" min="0" max="1" step="0.01" value="0.5">
+            <span id="amMsgAmpVal">0.5</span>
+        </label>
+        <label>
+            Carrier Amplitude:
+            <input type="range" id="amCarrierAmp" min="0.1" max="1" step="0.01" value="1">
+            <span id="amCarrierAmpVal">1</span>
+        </label>
+    </div>
+    <div class="chart-container">
+        <canvas id="amChart"></canvas>
+    </div>
+    <div class="chart-container">
+        <canvas id="amDemodChart"></canvas>
+    </div>
+    <div style="margin-top:18px;color:#1a4e8a;font-size:1.05rem;">
+        <b>How to use:</b> Adjust the sliders to change carrier/message frequencies and amplitudes.<br>
+        The first chart shows the AM signal. The second chart shows the demodulated (envelope detected) signal.
     </div>
 </section>
 
@@ -371,5 +427,100 @@
     </div>
 </footer>
 <script src="script.js"></script>
+<script>
+// --- AM Theory Toggle ---
+document.getElementById('amTheoryBtn').onclick = function() {
+    const theory = document.getElementById('amTheory');
+    theory.style.display = (theory.style.display === 'none' || theory.style.display === '') ? 'block' : 'none';
+};
+
+// --- AM Demo Simulation ---
+if (document.getElementById('amChart')) {
+    const amCarrierFreq = document.getElementById('amCarrierFreq');
+    const amMsgFreq = document.getElementById('amMsgFreq');
+    const amMsgAmp = document.getElementById('amMsgAmp');
+    const amCarrierAmp = document.getElementById('amCarrierAmp');
+    const amCarrierFreqVal = document.getElementById('amCarrierFreqVal');
+    const amMsgFreqVal = document.getElementById('amMsgFreqVal');
+    const amMsgAmpVal = document.getElementById('amMsgAmpVal');
+    const amCarrierAmpVal = document.getElementById('amCarrierAmpVal');
+
+    function updateAMVals() {
+        amCarrierFreqVal.textContent = amCarrierFreq.value;
+        amMsgFreqVal.textContent = amMsgFreq.value;
+        amMsgAmpVal.textContent = amMsgAmp.value;
+        amCarrierAmpVal.textContent = amCarrierAmp.value;
+    }
+
+    // Chart.js setup
+    let amChart, amDemodChart;
+    function plotAM() {
+        const N = 1000;
+        const fs = 10000;
+        const t = Array.from({length: N}, (_, i) => i / fs);
+        const Ac = parseFloat(amCarrierAmp.value);
+        const Am = parseFloat(amMsgAmp.value);
+        const fc = parseFloat(amCarrierFreq.value);
+        const fm = parseFloat(amMsgFreq.value);
+
+        const msg = t.map(x => Am * Math.sin(2 * Math.PI * fm * x));
+        const am = t.map((x, i) => (Ac + msg[i]) * Math.cos(2 * Math.PI * fc * x));
+        // Envelope detection (rectify + lowpass)
+        const envelope = msg.map(m => Math.abs(Ac + m));
+
+        if (!amChart) {
+            amChart = new Chart(document.getElementById('amChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: t,
+                    datasets: [
+                        { label: 'AM Signal', data: am, borderColor: '#1a4e8a', borderWidth: 1, pointRadius: 0, fill: false },
+                        { label: 'Envelope', data: envelope, borderColor: '#e67e22', borderWidth: 1, pointRadius: 0, fill: false, borderDash: [5,5] }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: true } },
+                    scales: { x: { display: false }, y: { display: true } }
+                }
+            });
+        } else {
+            amChart.data.datasets[0].data = am;
+            amChart.data.datasets[1].data = envelope;
+            amChart.update();
+        }
+
+        // Demodulated (envelope detected) signal
+        if (!amDemodChart) {
+            amDemodChart = new Chart(document.getElementById('amDemodChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: t,
+                    datasets: [
+                        { label: 'Demodulated (Envelope)', data: envelope, borderColor: '#e67e22', borderWidth: 1, pointRadius: 0, fill: false }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: true } },
+                    scales: { x: { display: false }, y: { display: true } }
+                }
+            });
+        } else {
+            amDemodChart.data.datasets[0].data = envelope;
+            amDemodChart.update();
+        }
+    }
+
+    [amCarrierFreq, amMsgFreq, amMsgAmp, amCarrierAmp].forEach(input => {
+        input.addEventListener('input', () => {
+            updateAMVals();
+            plotAM();
+        });
+    });
+    updateAMVals();
+    plotAM();
+}
+</script>
 </body>
 </html>
