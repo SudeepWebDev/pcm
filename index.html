@@ -612,6 +612,40 @@ if (document.getElementById('amChart')) {
     updateAMVals();
     plotAM();
 }
+
+// --- Pilot Carrier & Noise Chart Styling (for modulation demo) ---
+if (window.Chart && document.getElementById('modulationChart')) {
+    // Patch the chart creation for pilot carrier and noise
+    // This assumes you have code that creates the modulationChart, modulationChartNoPilot, and quantizationChart
+    // Add this after your existing chart creation code for those charts
+
+    // Example for pilot carrier (modulationChart):
+    if (window.modulationChart) {
+        // Find the pilot carrier dataset by label or index and style it
+        window.modulationChart.data.datasets.forEach(ds => {
+            if (ds.label && ds.label.toLowerCase().includes('pilot')) {
+                ds.borderWidth = 3;
+                ds.borderColor = '#e74c3c'; // strong red for pilot
+                ds.borderDash = [8, 4];
+                ds.pointRadius = 0;
+            }
+        });
+        window.modulationChart.update();
+    }
+
+    // Example for noise (quantizationChart):
+    if (window.quantizationChart) {
+        window.quantizationChart.data.datasets.forEach(ds => {
+            if (ds.label && ds.label.toLowerCase().includes('noise')) {
+                ds.borderWidth = 3;
+                ds.borderColor = '#27ae60'; // green for noise
+                ds.borderDash = [2, 2];
+                ds.pointRadius = 0;
+            }
+        });
+        window.quantizationChart.update();
+    }
+}
 </script>
 </body>
 </html>
