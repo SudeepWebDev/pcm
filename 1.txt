@@ -397,11 +397,7 @@ print(f"Cross-Validation Scores: {cv_scores}")
 print(f"Mean CV Score: {np.mean(cv_scores)}")
 
 ================================================================================
-
-# Decision Tree Classification
-
 import numpy as np
-import pandas as pd
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.tree import DecisionTreeClassifier
@@ -439,6 +435,34 @@ print(f"Feature Importances: {model.feature_importances_}")
 cv_scores = cross_val_score(model, X, y, cv=10)
 print(f"Cross-Validation Scores: {cv_scores}")
 print(f"Mean CV Score: {np.mean(cv_scores)}")
+
+# plotting roc auc curve
+# plotting ROC AUC curves for each class (one-vs-rest)
+import matplotlib.pyplot as plt
+from sklearn.metrics import RocCurveDisplay
+from sklearn.multiclass import OneVsRestClassifier
+from sklearn.preprocessing import label_binarize
+
+# Binarize the output for multiclass ROC
+y_test_binarized = label_binarize(y_test, classes=np.unique(y))
+n_classes = y_test_binarized.shape[1]
+
+# Wrap the model for one-vs-rest strategy
+ovr_model = OneVsRestClassifier(DecisionTreeClassifier(random_state=42))
+ovr_model.fit(X_train, label_binarize(y_train, classes=np.unique(y)))
+
+plt.figure(figsize=(10, 6))
+y_score = ovr_model.predict_proba(X_test)
+for i in range(n_classes):
+	RocCurveDisplay.from_predictions(
+		y_test_binarized[:, i],
+		y_score[:, i],
+		name=f"Class {iris.target_names[i]}"
+	)
+plt.title('ROC Curves (One-vs-Rest) for Decision Tree Classifier')
+plt.show()
+# save the fig
+plt.savefig('roc_auc_decision_tree.png')
 
 ================================================================================
 
